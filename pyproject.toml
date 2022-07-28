@@ -1,0 +1,19 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "bctools"
+authors = [{name = "Iwo Kucinski", email = "iwo.kucinski@gmail.com"}]
+description = "Tools for recovery of expressed barcodes from 10x scRNA-Seq data"
+license = {file = "LICENSE"}
+classifiers = ["License :: OSI Approved :: MIT License"]
+dynamic = ["version", "description"]
+version = "0.0.1"
+requires-python = ">=3.8"
+dependencies = ["cutadapt",
+                "numpy",
+                "matplotlib"]
+
+[project.optional-dependencies]
+dev = ["pytest"]

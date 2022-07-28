@@ -1,0 +1,13 @@
+#+TITLE: bctools - recovering expressed barcodes from scRNA-Seq data
+#+AUTHOR: Iwo Kucinski
+
+* Larry recipe
+
+First criterium
+Larry barcode is flanked by (in the direction the larry barcode sequencing is read)
+TTGCTAGGAGAGACCATATG...ATGTCTGGATCCGATATCGC
+and has the structure
+NNNNTGNNNNCANNNNACNNNNGANNNNGTNNNNAGNNNN
+
+* notes
+In paired-end mode, Cutadapt checks whether the input files are properly paired. An error is raised if one of the files contains more reads than the other or if the read names in the two files do not match.
