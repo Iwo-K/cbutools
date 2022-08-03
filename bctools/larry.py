@@ -23,12 +23,13 @@ def process_larry(files):
     # bars = np.array() #allocate the size
     # cbcumis = np.array()
 
-    bars = []
-    cbcumis = []
-
+    # Accumulating everything in a list
+    bar = []
+    cbc = []
+    umi = []
     with dnaio.open(file1="bar2.fq", file2="cbcumi2.fq") as reader:
         for record in reader:
-            bars.append(record[0].sequence)
-            cbcumis.append(record[1].sequence)
-    print(len(bars))
-    print(len(cbcumis))
+            bar.append(record[0].sequence)
+            cbc.append(record[1].sequence[:16])
+            umi.append(record[1].sequence[16:27])
+    return cbc, bar, umi

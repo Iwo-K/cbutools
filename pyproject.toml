@@ -13,7 +13,8 @@ version = "0.0.1"
 requires-python = ">=3.8"
 dependencies = ["cutadapt",
                 "numpy",
-                "matplotlib"]
+                "matplotlib",
+                "scipy"]
 
 [project.optional-dependencies]
 dev = ["pytest"]
