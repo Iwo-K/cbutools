@@ -4,7 +4,7 @@ import bctools as bc
 
 
 HERE = Path(__file__).parent
-assets_path = HERE / "assets/"
+# assets_path = HERE / "assets/"
 
 def test_load_larry():
     file1 = str(HERE / 'data/SLX-22398.SITTA1.s_1.r_1_small.fq')

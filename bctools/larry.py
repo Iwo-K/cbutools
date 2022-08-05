@@ -1,8 +1,10 @@
 #!/usr/bin/env ipython
 
 import numpy as np
+import pandas as pd
 from subprocess import run
 import dnaio
+from .classes import CBUSeries
 
 
 def process_larry(files):
@@ -23,13 +25,22 @@ def process_larry(files):
     # bars = np.array() #allocate the size
     # cbcumis = np.array()
 
-    # Accumulating everything in a list
-    bar = []
-    cbc = []
-    umi = []
+# Accumulating everything in a dictionary with tuples as keys
+    counts = {}
     with dnaio.open(file1="bar2.fq", file2="cbcumi2.fq") as reader:
         for record in reader:
-            bar.append(record[0].sequence)
-            cbc.append(record[1].sequence[:16])
-            umi.append(record[1].sequence[16:27])
-    return cbc, bar, umi
+            bar = record[0].sequence
+            if len(bar) == 40: #Only keeping LARRY barcodes with 40nt
+                cbc = record[1].sequence[:16]
+                umi = record[1].sequence[16:27]
+                # Add a check for empty entries and check lengths
+                k = (cbc, bar, umi)
+                if not k in counts:
+                    counts[k] = 0
+                counts[k] += 1
+
+    index = pd.MultiIndex.from_tuples([i for i in counts.keys()],
+                                      names=('CBC', 'Barcode', 'UMI'))
+    counts = CBUSeries([v for v in counts.values()],
+                       index=index)
+    return counts
