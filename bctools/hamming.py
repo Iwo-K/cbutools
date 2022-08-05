@@ -32,7 +32,7 @@ def hamming_distance(s1, s2):
         raise ValueError("Undefined for sequences of unequal length")
     return sum(el1 != el2 for el1, el2 in zip(s1, s2))
 
-def filter_by_hamming(cbu, threshold = 5, printpairs = False):
+def filter_by_hamming(cbu, which='Barcode', threshold = 5):
     """Filters out barcodes based on Hamming distance.
 
     Calculates hamming distances between each pair of barcodes, then removes
@@ -44,52 +44,48 @@ def filter_by_hamming(cbu, threshold = 5, printpairs = False):
         child of pd.Series with multiindex: CBC, Barcode and UMI
     threshold : int
         Minimum hamming distance threshold, barcodes with distance < threshold are discarded
-    printpairs : bool
-        Whether the the analysed barcode pairs should be printed
     Returns
     -------
     CBUSeries
         Filtered CBUSeries
 
     """
-    barcodes = cbu.index.get_level_values('Barcode').unique().values
-    barcodes = barcodes.astype(str)
+    seqs = cbu.index.get_level_values(which).unique().values
+    seqs = seqs.astype(str)
+    counts = cbu.groupby([which]).sum()
 
-    Bcounts = cbu.groupby(['Barcode']).sum()
-
-    hdist = map2d(barcodes, barcodes, hamming_distance, symmetry=True)
+    # Computing pairwise hamming distances
+    hdist = map2d(seqs, seqs, hamming_distance, symmetry=True)
 
     # Printing histogram for to see hamming distances
-    n, bins, patches = plt.hist(hdist.flatten(), bins=50)
+    n, bins, patches = plt.hist(hdist[np.triu_indices_from(hdist, k=1)], bins=50)
+    plt.title('Pairwise hamming distance')
     plt.show()
 
     belowtr = np.nonzero(hdist < threshold)
     belowtr = np.array(belowtr).T
 
     toreject = []
+    ties=[]
     for x1, x2 in belowtr:
         if(x1 != x2):
-            x1 = barcodes[x1]
-            x1val = Bcounts[x1]
-            if printpairs:
-                print(f"Found: {x1} {x1val}\n")
-            x2 = barcodes[x2]
-            x2val = Bcounts[x2]
-            if printpairs:
-                print(f"Found: {x2} {x2val}\n\n")
-                print(x2)
-                print(x2val)
+            x1 = seqs[x1]
+            x1val = counts[x1]
+            x2 = seqs[x2]
+            x2val = counts[x2]
             if x1val < x2val: toreject.append(x1)
             elif x2val < x1val: toreject.append(x2)
-            else: pass #print("There is a tie!")
+            else:
+                #How to resolve ties?
+                ties.append([x1, x2])
 
     if len(toreject) == 0:
-        print('No barcodes were rejected')
+        print(f'No barcodes rejected\nNumber of ties: {ties}')
         return cbu
     else:
         toreject = pd.Series(toreject).unique()
-        print("Rejected: ", len(toreject), "barcodes")
-        return cbu[~cbu.index.get_level_values('Barcode').isin(toreject)]
+        print(f"Rejected: {len(toreject)} barcodes\nNumber of ties: {ties}")
+        return cbu[~cbu.index.get_level_values(which).isin(toreject)]
 
 # solution from the LARRY github repo
 # Sorts all barcodes and loop through barcodes
