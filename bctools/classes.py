@@ -23,8 +23,9 @@ class CBUSeries(pd.Series):
         plt.title('Number of reads per CBC-Barcode-UMI combination')
         plt.show()
 
-    def filter_by_reads(self, min_counts=0):
-        return self[self > min_counts]
+    def filter_by_reads(self, levels='Barcode', min_counts=0, min_counts_per_cell=0):
+        #Add filtering min counts, min counts per cell, speify the levels for summary
+        return self[self >= min_counts]
 
     def filter_by_hamming(self, which='barcode', hamming_distance=2, collapse=True):
         """

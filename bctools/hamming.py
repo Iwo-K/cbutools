@@ -50,41 +50,46 @@ def filter_by_hamming(cbu, which='Barcode', threshold = 5):
         Filtered CBUSeries
 
     """
+
     seqs = cbu.index.get_level_values(which).unique().values
     seqs = seqs.astype(str)
+    n = len(seqs)
     counts = cbu.groupby([which]).sum()
+    counts = counts[seqs]
 
     # Computing pairwise hamming distances
     hdist = map2d(seqs, seqs, hamming_distance, symmetry=True)
 
     # Printing histogram for to see hamming distances
-    n, bins, patches = plt.hist(hdist[np.triu_indices_from(hdist, k=1)], bins=50)
+    no, bins, patches = plt.hist(hdist[np.triu_indices_from(hdist, k=1)], bins=50)
     plt.title('Pairwise hamming distance')
     plt.show()
 
-    belowtr = np.nonzero(hdist < threshold)
-    belowtr = np.array(belowtr).T
-
     toreject = []
-    ties=[]
-    for x1, x2 in belowtr:
-        if(x1 != x2):
-            x1 = seqs[x1]
-            x1val = counts[x1]
-            x2 = seqs[x2]
-            x2val = counts[x2]
-            if x1val < x2val: toreject.append(x1)
-            elif x2val < x1val: toreject.append(x2)
-            else:
-                #How to resolve ties?
-                ties.append([x1, x2])
+    ties = {}
+    for i in range(n):
+        x = seqs[i] #string
+        xcount = counts[x] #integer
+
+        row = hdist[i,:] #np.array
+        belowtr = np.nonzero(row < threshold)[0] #np array
+        belowtr = belowtr[belowtr != i]
+        belowtr_counts = counts.iloc[belowtr] #pd.Series
+
+        if np.any(xcount < belowtr_counts):
+            toreject.append(x)
+        elif xcount == belowtr_counts.max():
+            # print(f"{x} {xcount}")
+            # print(f"{counts[belowtr]}")
+            ties[x] = list(belowtr_counts.index[belowtr_counts == belowtr_counts.max()])
 
     if len(toreject) == 0:
         print(f'No barcodes rejected\nNumber of ties: {ties}')
         return cbu
     else:
         toreject = pd.Series(toreject).unique()
-        print(f"Rejected: {len(toreject)} barcodes\nNumber of ties: {ties}")
+        print(f"Rejected: {len(toreject)} barcodes\nNumber of ties: {len(ties)}")
+        print(f"Ties: {ties}")
         return cbu[~cbu.index.get_level_values(which).isin(toreject)]
 
 # solution from the LARRY github repo
