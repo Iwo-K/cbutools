@@ -32,7 +32,7 @@ def process_larry(files):
             bar = record[0].sequence
             if len(bar) == 40: #Only keeping LARRY barcodes with 40nt
                 cbc = record[1].sequence[:16]
-                umi = record[1].sequence[16:27]
+                umi = record[1].sequence[16:28]
                 # Add a check for empty entries and check lengths
                 k = (cbc, bar, umi)
                 if not k in counts:

@@ -6,6 +6,8 @@ from .hamming import hamming_filter
 class CBUSeries(pd.Series):
     def __init__(self, *args, **kwargs):
         super(CBUSeries, self).__init__(*args, **kwargs)
+        if not self.index.is_unique:
+            raise Exception('Index is not unique)')
         # These checks should be moved to a constructor function maybe?
         # if self.index.nlevels != 3:
         #     raise Exception('Wrong number of index levels')
@@ -16,6 +18,8 @@ class CBUSeries(pd.Series):
     # also be CBUSeries
     @property
     def _constructor(self):
+        if not self.index.is_unique:
+            raise Exception('Index is not unique)')
         return CBUSeries
 
     def plot_reads_histogram(self, groupby='Barcode'):
@@ -44,6 +48,7 @@ class CBUSeries(pd.Series):
         # Add filtering min counts, min counts per cell, speify the levels for summary
         labels = ['CBC', 'Barcode', 'UMI']
 
+        # If none or all three levels are supplied - quick return
         if (groupby == None) or sorted(groupby) == sorted(labels):
             return self[self >= min_counts]
 

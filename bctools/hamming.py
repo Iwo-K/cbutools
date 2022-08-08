@@ -32,7 +32,7 @@ def hamming_distance(s1, s2):
         raise ValueError("Undefined for sequences of unequal length")
     return sum(el1 != el2 for el1, el2 in zip(s1, s2))
 
-def hamming_filter(counts, threshold = 2):
+def hamming_filter(counts, threshold=2):
     """Filters out barcodes based on Hamming distance.
 
     Calculates hamming distances between each pair of barcodes, then removes
