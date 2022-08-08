@@ -1,5 +1,7 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+from .hamming import hamming_filter
 
 class CBUSeries(pd.Series):
     def __init__(self, *args, **kwargs):
@@ -16,35 +18,73 @@ class CBUSeries(pd.Series):
     def _constructor(self):
         return CBUSeries
 
-    def plot_read_histogram(self):
-        plt.hist(self, bins=30)
-        plt.yscale('log')
-        plt.xscale('log')
-        plt.title('Number of reads per CBC-Barcode-UMI combination')
-        plt.show()
+    def plot_reads_histogram(self, groupby='Barcode'):
+        """ Plots histogra of reads, grouped as indicated in the groupby argument"""
+        labels = ['CBC', 'Barcode', 'UMI']
+        def plot_hist(x, title=''):
+            plt.hist(np.log(x)/np.log(10), bins=50)
+            plt.xticks(range(5), np.logspace(0,4,5))
+            # plt.xscale('log')
+            plt.yscale('log')
+            plt.title(title + '\nMax reads plotted = 10000')
+            plt.show()
 
-    def filter_by_reads(self, levels='Barcode', min_counts=0, min_counts_per_cell=0):
-        #Add filtering min counts, min counts per cell, speify the levels for summary
-        return self[self >= min_counts]
+        if (groupby == None) or sorted(groupby) == sorted(labels):
+            plot_hist(self, title='Number of reads per CBC-Barcode-UMI combination')
+            plt.show()
 
-    def filter_by_hamming(self, which='barcode', hamming_distance=2, collapse=True):
-        """
-        Looks at pairwise hamming distances between indicated barcodes and
-        if barcodes differ by <= hamming_distance, either keep the barcode with more
-        counts (collapse=True) or sums the counts for both
-        """
-        def hamming(a,b):
-            return np.sum([x1 != x2 for x1,x2 in zip(a, b)])
+        else:
+            grouped = self.groupby(groupby).sum()
+            plot_hist(grouped, title=f'Number of reads per {groupby} combination')
+            plt.show()
 
-        filtered = {}
-        for i in self.index.get_level_values(which):
-            found = False
-            for j in filtered:
-                #Add to the filtered list
 
-                #if found then decide what to do with and
-                #Found=True
-                break
+    def filter_by_reads(self, groupby='Barcode', min_counts=0):
+        """ Filters by minimum expected number of reads. With the groupby column, level combinations are pertmitted"""
+        # Add filtering min counts, min counts per cell, speify the levels for summary
+        labels = ['CBC', 'Barcode', 'UMI']
+
+        if (groupby == None) or sorted(groupby) == sorted(labels):
+            return self[self >= min_counts]
+
+        # Converting single-element list to a string
+        if (type(groupby) is list) and len(groupby) == 1:
+            groupby = groupby[0]
+
+        # Getting indices for a single index level (which can be easily extracted with get_level_values())
+        if type(groupby) is str:
+            if groupby in labels:
+                indexSUB = tuple(self.index.get_level_values(groupby))
+            else:
+                raise Exception('Invalid groupby argument. Groupby can only be None, string or a list containing combinations of CBC, Barcode and UMI')
+
+        # Running if groupby is a list
+        elif type(groupby) is list:
+            if len(groupby) > 2: #The 3-element list shoudl be caught above
+                raise Exception('Invalid groupby argument. Groupby can only be None, string or a list containing combinations of CBC, Barcode and UMI')
+
+            # Checking if all groupby elements are valid
+            check = [i in labels for i in groupby]
+            if not all(check):
+                raise Exception('Some of groupby arguments are not in the CBC,Barcoce, UMI set. Groupby argument can only be None, string or a list containing combinations of CBC, Barcode and UMI')
+
+            # Getting indices for >1 index level (as tuples)
+            groupby = [x for x in labels if x in groupby]
+            indexSUB = []
+            for i in groupby:
+                indexSUB.append(self.index.get_level_values(i))
+            indexSUB = tuple(zip(*indexSUB))
+
+        else:
+            raise Exception('Problem with the groupby argument. Groupby argument can only be None, string or a list containing combinations of CBC, Barcode and UMI')
+
+        # Filtering and subsetting index for those present in the filtered data
+        filtered = self.groupby(groupby).sum()
+        filtered = filtered[filtered >= min_counts]
+
+        tokeep = [i in filtered.index for i in indexSUB]
+        return self[tokeep]
+
     def filter_by_hamming(self, which='Barcode', threshold=2, collapse=True):
 
         counts = self.groupby([which]).sum()
