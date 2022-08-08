@@ -45,3 +45,11 @@ class CBUSeries(pd.Series):
                 #if found then decide what to do with and
                 #Found=True
                 break
+    def filter_by_hamming(self, which='Barcode', threshold=2, collapse=True):
+
+        counts = self.groupby([which]).sum()
+        tokeep, torejet, ties =  hamming_filter(counts=counts,
+                                                threshold=threshold)
+        if len(ties) > 0:
+            print(f"Ties detected between: {ties}")
+        return self.loc[:,tokeep,:]

@@ -32,7 +32,7 @@ def hamming_distance(s1, s2):
         raise ValueError("Undefined for sequences of unequal length")
     return sum(el1 != el2 for el1, el2 in zip(s1, s2))
 
-def filter_by_hamming(cbu, which='Barcode', threshold = 5):
+def hamming_filter(counts, threshold = 2):
     """Filters out barcodes based on Hamming distance.
 
     Calculates hamming distances between each pair of barcodes, then removes
@@ -40,8 +40,8 @@ def filter_by_hamming(cbu, which='Barcode', threshold = 5):
 
     Parameters
     ----------
-    cbu : CBUSeries object
-        child of pd.Series with multiindex: CBC, Barcode and UMI
+    counts : pd.Series object
+        sequences in the index and counts in values
     threshold : int
         Minimum hamming distance threshold, barcodes with distance < threshold are discarded
     Returns
@@ -50,12 +50,10 @@ def filter_by_hamming(cbu, which='Barcode', threshold = 5):
         Filtered CBUSeries
 
     """
-
-    seqs = cbu.index.get_level_values(which).unique().values
+    print(f"Filtering using Hamming distance threshold of {threshold}...")
+    seqs = counts.index.values
     seqs = seqs.astype(str)
     n = len(seqs)
-    counts = cbu.groupby([which]).sum()
-    counts = counts[seqs]
 
     # Computing pairwise hamming distances
     hdist = map2d(seqs, seqs, hamming_distance, symmetry=True)
@@ -83,14 +81,14 @@ def filter_by_hamming(cbu, which='Barcode', threshold = 5):
             # print(f"{counts[belowtr]}")
             ties[x] = list(belowtr_counts.index[belowtr_counts == belowtr_counts.max()])
 
-    if len(toreject) == 0:
-        print(f'No barcodes rejected\nNumber of ties: {ties}')
-        return cbu
-    else:
-        toreject = pd.Series(toreject).unique()
-        print(f"Rejected: {len(toreject)} barcodes\nNumber of ties: {len(ties)}")
-        print(f"Ties: {ties}")
-        return cbu[~cbu.index.get_level_values(which).isin(toreject)]
+
+    tokeep = counts.index.values[~counts.index.isin(toreject)]
+
+    print(f"Passed: {len(tokeep)}\n" \
+          f"Rejected: {len(toreject)}\n" \
+          f"Ties: {len(ties)}")
+
+    return tokeep, toreject, ties
 
 # solution from the LARRY github repo
 # Sorts all barcodes and loop through barcodes
