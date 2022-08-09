@@ -72,12 +72,11 @@ class CBSeries(pd.Series):
         labels = ["CBC", "Barcode"]
         return filter_series(self, groupby=groupby, labels=labels, min_counts=min_counts)
 
-    def assign_barcode(self):
-        pass
-
     def plot_hist(self, groupby='Barcode', *args, **kwargs):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
+    def assign_barcode(self):
+        pass
 
 class CBUSeries(pd.Series):
     def __init__(self, *args, **kwargs):
@@ -122,58 +121,3 @@ class CBUSeries(pd.Series):
 
     def count_UMI(self):
         return CBSeries(self.groupby(["CBC", "Barcode"]).size())
-
-    # def filter_by_reads(self, groupby="Barcode", min_counts=0):
-    #     """Filters by minimum expected number of reads. With the groupby column, level combinations are pertmitted"""
-    #     # Add filtering min counts, min counts per cell, speify the levels for summary
-    #     labels = ["CBC", "Barcode", "UMI"]
-
-    #     # If none or all three levels are supplied - quick return
-    #     if (groupby == None) or sorted(groupby) == sorted(labels):
-    #         return self[self >= min_counts]
-
-    #     # Converting single-element list to a string
-    #     if (type(groupby) is list) and len(groupby) == 1:
-    #         groupby = groupby[0]
-
-    #     # Getting indices for a single index level (which can be easily extracted with get_level_values())
-    #     if type(groupby) is str:
-    #         if groupby in labels:
-    #             indexSUB = tuple(self.index.get_level_values(groupby))
-    #         else:
-    #             raise Exception(
-    #                 "Invalid groupby argument. Groupby can only be None, string or a list containing combinations of CBC, Barcode and UMI"
-    #             )
-
-    #     # Running if groupby is a list
-    #     elif type(groupby) is list:
-    #         if len(groupby) > 2:  # The 3-element list shoudl be caught above
-    #             raise Exception(
-    #                 "Invalid groupby argument. Groupby can only be None, string or a list containing combinations of CBC, Barcode and UMI"
-    #             )
-
-    #         # Checking if all groupby elements are valid
-    #         check = [i in labels for i in groupby]
-    #         if not all(check):
-    #             raise Exception(
-    #                 "Some of groupby arguments are not in the CBC,Barcoce, UMI set. Groupby argument can only be None, string or a list containing combinations of CBC, Barcode and UMI"
-    #             )
-
-    #         # Getting indices for >1 index level (as tuples)
-    #         groupby = [x for x in labels if x in groupby]
-    #         indexSUB = []
-    #         for i in groupby:
-    #             indexSUB.append(self.index.get_level_values(i))
-    #         indexSUB = tuple(zip(*indexSUB))
-
-    #     else:
-    #         raise Exception(
-    #             "Problem with the groupby argument. Groupby argument can only be None, string or a list containing combinations of CBC, Barcode and UMI"
-    #         )
-
-    #     # Filtering and subsetting index for those present in the filtered data
-    #     filtered = self.groupby(groupby).sum()
-    #     filtered = filtered[filtered >= min_counts]
-
-    #     tokeep = [i in filtered.index for i in indexSUB]
-    #     return self[tokeep]
