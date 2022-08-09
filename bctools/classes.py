@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from .hamming import hamming_filter
 from math import ceil
 
+# TODO how to add check that the indices are names correctly and in the right order?
+
 def filter_series(series, groupby=None, labels=["CBC", "Barcode", "UMI"], min_counts=0):
     """Filter a series (pd.Series, CBSeries or CBUSeries) based on counts,
     grouped by level or level combination of multiindex"""
@@ -75,8 +77,26 @@ class CBSeries(pd.Series):
     def plot_hist(self, groupby='Barcode', *args, **kwargs):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
-    def assign_barcode(self):
-        pass
+    def assign_barcode(self, dispr_filter=None):
+        """Assigns barcode"""
+
+        df = pd.DataFrame()
+
+        for i in self.index.levels[0]:
+            counts = self[i]
+            if dispr_filter is not None:
+                max_counts = max(counts)
+                counts = counts[counts > (dispr_filter * max_counts)]
+            barcodes = counts.index.tolist()
+            row = pd.DataFrame({'Barcode_list' : [barcodes], 'Barcode_n' : len(barcodes)}, index=[i])
+            df = df.append(row)
+
+        def catl(x):
+            ''' Function for concatenating strings '''
+            return('-'.join(x))
+        df['Barcode'] = df['Barcode_list'].apply(func = catl)
+        return df
+
 
 class CBUSeries(pd.Series):
     def __init__(self, *args, **kwargs):
