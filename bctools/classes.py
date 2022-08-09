@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from .hamming import hamming_filter
+from math import ceil
 
 def filter_series(series, groupby=None, labels=["CBC", "Barcode", "UMI"], min_counts=0):
     """Filter a series (pd.Series, CBSeries or CBUSeries) based on counts,
@@ -38,6 +39,22 @@ def filter_series(series, groupby=None, labels=["CBC", "Barcode", "UMI"], min_co
     indexSUB = series.index.droplevel(level=todrop)
     return series[indexSUB.isin(filtered.index)]
 
+def plot_groupby_hist(series, groupby, bins=50, vmax=None):
+    """Plots histogram of reads, grouped as indicated in the groupby argument"""
+
+    grouped = series.groupby(groupby).sum()
+    plt.hist(np.log10(grouped), bins=bins)
+
+    if vmax is None:
+        vmax = grouped.max()
+    ticks = ceil(np.log10(vmax)) + 1
+    vmax = 10**(ticks-1)
+    logpos = np.logspace(0, np.log10(vmax), ticks)
+    plt.xticks(range(ticks), logpos)
+    # plt.xscale('log')
+    plt.yscale("log")
+    plt.title(f"Number of reads per {groupby} combination")
+    plt.show()
 
 class CBSeries(pd.Series):
     def __init__(self, *args, **kwargs):
@@ -51,15 +68,15 @@ class CBSeries(pd.Series):
             raise Exception("Index is not unique")
         return CBSeries
 
-    def assign_barcode(self):
-        pass
-
-    def plot_UMI_histogram(self):
-        pass
-
     def filter_by_UMI(self, groupby="Barcode", min_counts=0):
         labels = ["CBC", "Barcode"]
         return filter_series(self, groupby=groupby, labels=labels, min_counts=min_counts)
+
+    def assign_barcode(self):
+        pass
+
+    def plot_hist(self, groupby='Barcode', *args, **kwargs):
+        plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
 
 class CBUSeries(pd.Series):
@@ -86,26 +103,9 @@ class CBUSeries(pd.Series):
         else:
             return pd.Series
 
-    def plot_reads_histogram(self, groupby="Barcode"):
-        """Plots histogram of reads, grouped as indicated in the groupby argument"""
-        labels = ["CBC", "Barcode", "UMI"]
+    def plot_hist(self, groupby='Barcode', *args, **kwargs):
+        plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
-        def plot_hist(x, title=""):
-            plt.hist(np.log(x) / np.log(10), bins=50)
-            plt.xticks(range(5), np.logspace(0, 4, 5))
-            # plt.xscale('log')
-            plt.yscale("log")
-            plt.title(title + "\nMax reads plotted = 10000")
-            plt.show()
-
-        if (groupby == None) or sorted(groupby) == sorted(labels):
-            plot_hist(self, title="Number of reads per CBC-Barcode-UMI combination")
-            plt.show()
-
-        else:
-            grouped = self.groupby(groupby).sum()
-            plot_hist(grouped, title=f"Number of reads per {groupby} combination")
-            plt.show()
 
     def filter_by_reads(self, groupby="Barcode", min_counts=0):
         """Filters by minimum expected number of reads. With the groupby column, level combinations are pertmitted"""
