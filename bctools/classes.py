@@ -21,8 +21,42 @@ class CBSeries(pd.Series):
     def plot_UMI_histogram(self):
         pass
 
-    def filter_by_UMI(self):
+    def filter_by_UMI(self, groupby="Barcode", min_counts=0):
+        labels = ["CBC", "Barcode"]
+
+        # If none or all three levels are supplied - just filter the values and return
+        if (groupby == None) or sorted(groupby) == sorted(labels):
+            return self[self >= min_counts]
+
+        # Converting a string into a list
+        if type(groupby) is str:
+            groupby = [groupby]
+
+        # Catchiung invalid groupby
+        if (type(groupby) is list) and (0 < len(groupby) < 3):
+            # Checking if all groupby elements are valid
+            check = [i in labels for i in groupby]
+            if not all(check):
+                raise Exception(
+                    "Invalid groupby argument (should be None, 'CBC', 'Barcode' or ['CBC', 'Barcode']"
+                )
+        else:
+            raise Exception(
+                "Invalid groupby argument (should be None, 'CBC', 'Barcode' or ['CBC', 'Barcode']"
+            )
         pass
+
+        groupby = [x for x in labels if x in groupby]
+        filtered = self.groupby(groupby).sum()
+        filtered = filtered[filtered >= min_counts]
+        print(filtered.shape)
+
+        # Getting the matching index in the original data (dropping levels that were grouped)
+        todrop = [i for i in labels if i not in groupby]
+        print(todrop)
+
+        indexSUB = self.index.droplevel(level=todrop)
+        return self[indexSUB.isin(filtered.index)]
 
 
 class CBUSeries(pd.Series):
@@ -42,9 +76,9 @@ class CBUSeries(pd.Series):
     def _constructor(self):
         if not self.index.is_unique:
             raise Exception("Index is not unique")
-        if self.index.names == ['CBC', 'Barcode', 'UMI']:
+        if self.index.names == ["CBC", "Barcode", "UMI"]:
             return CBUSeries
-        elif self.index.names == ['CBC', 'Barcode']:
+        elif self.index.names == ["CBC", "Barcode"]:
             return CBSeries
         else:
             return pd.Series
@@ -87,10 +121,13 @@ class CBUSeries(pd.Series):
             # Checking if all groupby elements are valid
             check = [i in labels for i in groupby]
             if not all(check):
-                raise Exception("Invalid groupby argument. Groupby argument can only be None, string or a list containing combinations of CBC, Barcode and UMI")
+                raise Exception(
+                    "Invalid groupby argument (should be None, string or a list with combination of CBC, Barcode and UMI"
+                )
         else:
-            raise Exception("Invalid groupby argument. Groupby argument can only be None, string or a list containing combinations of CBC, Barcode and UMI")
-
+            raise Exception(
+                "Invalid groupby argument (should be None, string or a list with combination of CBC, Barcode and UMI"
+            )
 
         # Filtering and subsetting index for those present in the filtered data
         groupby = [x for x in labels if x in groupby]
@@ -114,7 +151,7 @@ class CBUSeries(pd.Series):
         return self.loc[:, tokeep, :]
 
     def count_UMI(self):
-        return CBSeries(self.groupby(['CBC', 'Barcode']).size())
+        return CBSeries(self.groupby(["CBC", "Barcode"]).size())
 
     # def filter_by_reads(self, groupby="Barcode", min_counts=0):
     #     """Filters by minimum expected number of reads. With the groupby column, level combinations are pertmitted"""
