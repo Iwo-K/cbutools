@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from IPython.core.debugger import set_trace
 
+
 def map2d(x, y, func, symmetry=False):
     """Calls function elementwise on iterable 1d objects x and y and returns
     a matrix with the output values.
@@ -15,7 +16,7 @@ def map2d(x, y, func, symmetry=False):
     if not symmetry:
         for col in range(0, len(x)):
             for row in range(0, len(y)):
-                 mat[row, col] = func(x[row], y[col])
+                mat[row, col] = func(x[row], y[col])
     else:
         n = 0
         for col in range(0, len(x)):
@@ -32,7 +33,8 @@ def hamming_distance(s1, s2):
         raise ValueError("Undefined for sequences of unequal length")
     return sum(el1 != el2 for el1, el2 in zip(s1, s2))
 
-def hamming_filter(counts, threshold=2):
+
+def hamming_filter(counts, threshold=3):
     """Filters out barcodes based on Hamming distance.
 
     Calculates hamming distances between each pair of barcodes, then removes
@@ -60,19 +62,19 @@ def hamming_filter(counts, threshold=2):
 
     # Printing histogram for to see hamming distances
     no, bins, patches = plt.hist(hdist[np.triu_indices_from(hdist, k=1)], bins=50)
-    plt.title('Pairwise hamming distance')
+    plt.title("Pairwise hamming distance")
     plt.show()
 
     toreject = []
     ties = {}
     for i in range(n):
-        x = seqs[i] #string
-        xcount = counts[x] #integer
+        x = seqs[i]  # string
+        xcount = counts[x]  # integer
 
-        row = hdist[i,:] #np.array
-        belowtr = np.nonzero(row < threshold)[0] #np array
+        row = hdist[i, :]  # np.array
+        belowtr = np.nonzero(row < threshold)[0]  # np array
         belowtr = belowtr[belowtr != i]
-        belowtr_counts = counts.iloc[belowtr] #pd.Series
+        belowtr_counts = counts.iloc[belowtr]  # pd.Series
 
         if np.any(xcount < belowtr_counts):
             toreject.append(x)
@@ -81,14 +83,14 @@ def hamming_filter(counts, threshold=2):
             # print(f"{counts[belowtr]}")
             ties[x] = list(belowtr_counts.index[belowtr_counts == belowtr_counts.max()])
 
-
     tokeep = counts.index.values[~counts.index.isin(toreject)]
 
-    print(f"Passed: {len(tokeep)}\n" \
-          f"Rejected: {len(toreject)}\n" \
-          f"Ties: {len(ties)}")
+    print(
+        f"Passed: {len(tokeep)}\n" f"Rejected: {len(toreject)}\n" f"Ties: {len(ties)}"
+    )
 
     return tokeep, toreject, ties
+
 
 # solution from the LARRY github repo
 # Sorts all barcodes and loop through barcodes

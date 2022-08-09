@@ -25,12 +25,12 @@ def process_larry(files):
     # bars = np.array() #allocate the size
     # cbcumis = np.array()
 
-# Accumulating everything in a dictionary with tuples as keys
+    # Accumulating everything in a dictionary with tuples as keys
     counts = {}
     with dnaio.open(file1="bar2.fq", file2="cbcumi2.fq") as reader:
         for record in reader:
             bar = record[0].sequence
-            if len(bar) == 40: #Only keeping LARRY barcodes with 40nt
+            if len(bar) == 40:  # Only keeping LARRY barcodes with 40nt
                 cbc = record[1].sequence[:16]
                 umi = record[1].sequence[16:28]
                 # Add a check for empty entries and check lengths
@@ -39,8 +39,8 @@ def process_larry(files):
                     counts[k] = 0
                 counts[k] += 1
 
-    index = pd.MultiIndex.from_tuples([i for i in counts.keys()],
-                                      names=('CBC', 'Barcode', 'UMI'))
-    counts = CBUSeries([v for v in counts.values()],
-                       index=index)
+    index = pd.MultiIndex.from_tuples(
+        [i for i in counts.keys()], names=("CBC", "Barcode", "UMI")
+    )
+    counts = CBUSeries([v for v in counts.values()], index=index)
     return counts
