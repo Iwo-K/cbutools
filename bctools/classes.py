@@ -3,6 +3,42 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .hamming import hamming_filter
 
+def filter_series(series, groupby=None, labels=["CBC", "Barcode", "UMI"], min_counts=0):
+    """Filter a series (pd.Series, CBSeries or CBUSeries) based on counts,
+    grouped by level or level combination of multiindex"""
+
+    # If none or all three levels are supplied - just filter the values and return
+    if (groupby == None) or sorted(groupby) == sorted(labels):
+        return series[series >= min_counts]
+
+    # Converting a string into a list
+    if type(groupby) is str:
+        groupby = [groupby]
+
+    # Catching invalid groupby
+    if (type(groupby) is list) and (0 < len(groupby) <= len(labels)):
+        # Checking if all groupby elements are valid
+        check = [i in labels for i in groupby]
+        if not all(check):
+            raise Exception(
+                "Invalid groupby argument (should be None or combination of f{labels}"
+            )
+    else:
+        raise Exception(
+            "Invalid groupby argument (should be None or combination of f{labels}"
+        )
+
+    groupby = [x for x in labels if x in groupby]
+    filtered = series.groupby(groupby).sum()
+    filtered = filtered[filtered >= min_counts]
+
+    # Getting the matching index in the original data (dropping levels that were grouped)
+    todrop = [i for i in labels if i not in groupby]
+
+    indexSUB = series.index.droplevel(level=todrop)
+    return series[indexSUB.isin(filtered.index)]
+
+
 class CBSeries(pd.Series):
     def __init__(self, *args, **kwargs):
         super(CBSeries, self).__init__(*args, **kwargs)
@@ -23,40 +59,7 @@ class CBSeries(pd.Series):
 
     def filter_by_UMI(self, groupby="Barcode", min_counts=0):
         labels = ["CBC", "Barcode"]
-
-        # If none or all three levels are supplied - just filter the values and return
-        if (groupby == None) or sorted(groupby) == sorted(labels):
-            return self[self >= min_counts]
-
-        # Converting a string into a list
-        if type(groupby) is str:
-            groupby = [groupby]
-
-        # Catchiung invalid groupby
-        if (type(groupby) is list) and (0 < len(groupby) < 3):
-            # Checking if all groupby elements are valid
-            check = [i in labels for i in groupby]
-            if not all(check):
-                raise Exception(
-                    "Invalid groupby argument (should be None, 'CBC', 'Barcode' or ['CBC', 'Barcode']"
-                )
-        else:
-            raise Exception(
-                "Invalid groupby argument (should be None, 'CBC', 'Barcode' or ['CBC', 'Barcode']"
-            )
-        pass
-
-        groupby = [x for x in labels if x in groupby]
-        filtered = self.groupby(groupby).sum()
-        filtered = filtered[filtered >= min_counts]
-        print(filtered.shape)
-
-        # Getting the matching index in the original data (dropping levels that were grouped)
-        todrop = [i for i in labels if i not in groupby]
-        print(todrop)
-
-        indexSUB = self.index.droplevel(level=todrop)
-        return self[indexSUB.isin(filtered.index)]
+        return filter_series(self, groupby=groupby, labels=labels, min_counts=min_counts)
 
 
 class CBUSeries(pd.Series):
@@ -107,40 +110,7 @@ class CBUSeries(pd.Series):
     def filter_by_reads(self, groupby="Barcode", min_counts=0):
         """Filters by minimum expected number of reads. With the groupby column, level combinations are pertmitted"""
         labels = ["CBC", "Barcode", "UMI"]
-
-        # If none or all three levels are supplied - just filter the values and return
-        if (groupby == None) or sorted(groupby) == sorted(labels):
-            return self[self >= min_counts]
-
-        # Converting a string into a list
-        if type(groupby) is str:
-            groupby = [groupby]
-
-        # Catchiung invalid groupby
-        if (type(groupby) is list) and (0 < len(groupby) < 4):
-            # Checking if all groupby elements are valid
-            check = [i in labels for i in groupby]
-            if not all(check):
-                raise Exception(
-                    "Invalid groupby argument (should be None, string or a list with combination of CBC, Barcode and UMI"
-                )
-        else:
-            raise Exception(
-                "Invalid groupby argument (should be None, string or a list with combination of CBC, Barcode and UMI"
-            )
-
-        # Filtering and subsetting index for those present in the filtered data
-        groupby = [x for x in labels if x in groupby]
-        filtered = self.groupby(groupby).sum()
-        filtered = filtered[filtered >= min_counts]
-        print(filtered.shape)
-
-        # Getting the matching index in the original data (dropping levels that were grouped)
-        todrop = [i for i in labels if i not in groupby]
-        print(todrop)
-
-        indexSUB = self.index.droplevel(level=todrop)
-        return self[indexSUB.isin(filtered.index)]
+        return filter_series(self, groupby=groupby, labels=labels, min_counts=min_counts)
 
     def filter_by_hamming(self, which="Barcode", threshold=2, collapse=True):
 
