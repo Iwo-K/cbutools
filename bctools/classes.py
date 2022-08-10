@@ -4,7 +4,31 @@ import matplotlib.pyplot as plt
 from .hamming import hamming_filter
 from math import ceil
 
-# TODO how to add check that the indices are names correctly and in the right order?
+# TODO how to add check that the indices are names correctly and in the right order? (maybe add an if clause and then the inex check?)
+# maybe decorators? I have failed so far in the __init__ modification method
+#
+# TODO add simple summary print (no of barcodes, no of barcodes per cell with some deviations?)
+# probably best if this summary is stored but then updated with every filtering step
+
+def load_barcodes(file):
+    """Loads a .csv files with barcodes and convert automatically to CBUSeries or CBseries"""
+
+    data = pd.read_csv(file)
+    if all(data.columns == ['CBC', 'Barcode', 'UMI', '0']):
+        ser = pd.Series(data['0'])
+        ind =  pd.MultiIndex.from_frame(data.loc[:, ['CBC', 'Barcode', 'UMI']])
+        ser.index = ind
+        return CBUSeries(ser)
+
+    elif all(data.columns == ['CBC', 'Barcode', '0']):
+        ser = pd.Series(data['0'])
+        ind =  pd.MultiIndex.from_frame(data.loc[:, ['CBC', 'Barcode']])
+        ser.index = ind
+        return CBSeries(ser)
+
+    else:
+        raise Exception('This does not look like CBUSeries or CBSeries saved')
+
 
 def filter_series(series, groupby=None, labels=["CBC", "Barcode", "UMI"], min_counts=0):
     """Filter a series (pd.Series, CBSeries or CBUSeries) based on counts,
@@ -97,30 +121,19 @@ class CBSeries(pd.Series):
         df['Barcode'] = df['Barcode_list'].apply(func = catl)
         return df
 
+    def save_barcodes(self, *args, **kwargs):
+        self.to_csv(*args, **kwargs)
+
 
 class CBUSeries(pd.Series):
     def __init__(self, *args, **kwargs):
         super(CBUSeries, self).__init__(*args, **kwargs)
         if not self.index.is_unique:
-            raise Exception("Index is not unique")
-        # Where should these checks be made? Should I make a constructor function?
-        # if self.index.nlevels != 3:
-        #     raise Exception('Wrong number of index levels')
-        # if self.index.names != ['CBC', 'Barcode', 'UMI']:
-        #     raise Exception('Index names are not: "CBC", "Barcode, "UMI"')
+            raise Exception("Index is not un# ique")
 
-    # setting this will mean that whenever a new Series is generated it will
-    # also be CBUSeries
     @property
     def _constructor(self):
-        if not self.index.is_unique:
-            raise Exception("Index is not unique")
-        if self.index.names == ["CBC", "Barcode", "UMI"]:
-            return CBUSeries
-        elif self.index.names == ["CBC", "Barcode"]:
-            return CBSeries
-        else:
-            return pd.Series
+        return CBUSeries
 
     def plot_hist(self, groupby='Barcode', *args, **kwargs):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
@@ -141,3 +154,6 @@ class CBUSeries(pd.Series):
 
     def count_UMI(self):
         return CBSeries(self.groupby(["CBC", "Barcode"]).size())
+
+    def save_barcodes(self, *args, **kwargs):
+        self.to_csv(*args, **kwargs)

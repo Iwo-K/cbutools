@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from . import hamming
 from . import classes
+from .classes import load_barcodes
 
 
 def get_barcodes(files, type="larry", valid_CBC=None, save="barcodes.csv"):
