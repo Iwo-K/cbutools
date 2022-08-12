@@ -106,12 +106,12 @@ class CBSeries(pd.Series):
     def __init__(self, *args, **kwargs):
         super(CBSeries, self).__init__(*args, **kwargs)
         if not self.index.is_unique:
-            raise Exception("Index is not unique")
+            raise Exception("Index is not unique. Convert to pd.Series.")
 
     @property
     def _constructor(self):
         if not self.index.is_unique:
-            raise Exception("Index is not unique")
+            raise Exception("Index is not unique. Confert to pd.Series.")
         return CBSeries
 
     @check_CB_index
@@ -168,10 +168,12 @@ class CBUSeries(pd.Series):
     def __init__(self, *args, **kwargs):
         super(CBUSeries, self).__init__(*args, **kwargs)
         if not self.index.is_unique:
-            raise Exception("Index is not unique")
+            raise Exception("Index is not unique (convert to pd.Series)")
 
     @property
     def _constructor(self):
+        if not self.index.is_unique:
+            raise Exception("Index is not unique (convert to pd.Series)")
         return CBUSeries
 
     def plot_hist(self, groupby="Barcode", *args, **kwargs):
