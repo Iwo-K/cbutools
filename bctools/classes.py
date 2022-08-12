@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .hamming import hamming_filter
 from math import ceil
+from functools import wraps
 
 # TODO how to add check that the indices are names correctly and in the right order? (maybe add an if clause and then the inex check?)
 # maybe decorators? I have failed so far in the __init__ modification method
@@ -29,6 +30,16 @@ def load_barcodes(file):
 
     else:
         raise Exception('This does not look like CBUSeries or CBSeries saved')
+
+
+def check_CB_index(f):
+    """Decorator to check the index before running some CBU-specific methods"""
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if args[0].index.names != ['CBC', 'Barcode']:
+            raise Exception('The multiindex is not "CBC", "Barcode"')
+        return f(*args, **kwargs)
+    return wrapper
 
 
 def filter_series(series, groupby=None, labels=["CBC", "Barcode", "UMI"], min_counts=0):
@@ -95,6 +106,7 @@ class CBSeries(pd.Series):
             raise Exception("Index is not unique")
         return CBSeries
 
+    @check_CB_index
     def filter_by_UMI(self, groupby="Barcode", min_counts=0):
         labels = ["CBC", "Barcode"]
         return filter_series(self, groupby=groupby, labels=labels, min_counts=min_counts)
@@ -102,6 +114,7 @@ class CBSeries(pd.Series):
     def plot_hist(self, groupby='Barcode', *args, **kwargs):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
+    @check_CB_index
     def assign_barcodes(self, dispr_filter=None):
         """Assigns barcode"""
 
@@ -126,11 +139,21 @@ class CBSeries(pd.Series):
         self.to_csv(*args, **kwargs)
 
 
+def check_CBU_index(f):
+    """Decorator to check the index before running some CBU-specific methods"""
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if args[0].index.names != ['CBC', 'Barcode', 'UMI']:
+            raise Exception('The multiindex is not "CBC", "Barcode", "UMI"')
+        return f(*args, **kwargs)
+    return wrapper
+
+
 class CBUSeries(pd.Series):
     def __init__(self, *args, **kwargs):
         super(CBUSeries, self).__init__(*args, **kwargs)
         if not self.index.is_unique:
-            raise Exception("Index is not un# ique")
+            raise Exception("Index is not unique")
 
     @property
     def _constructor(self):
@@ -140,11 +163,13 @@ class CBUSeries(pd.Series):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
 
+    @check_CBU_index
     def filter_by_reads(self, groupby="Barcode", min_counts=0):
         """Filters by minimum expected number of reads. With the groupby column, level combinations are pertmitted"""
         labels = ["CBC", "Barcode", "UMI"]
         return filter_series(self, groupby=groupby, labels=labels, min_counts=min_counts)
 
+    @check_CBU_index
     def filter_by_hamming(self, which="Barcode", min_distance=2):
 
         counts = self.groupby([which]).sum()
@@ -161,6 +186,7 @@ class CBUSeries(pd.Series):
         if which == 'UMI':
             return self.loc[:, :, tokeep]
 
+    @check_CBU_index
     def count_UMI(self):
         return CBSeries(self.groupby(["CBC", "Barcode"]).size())
 
