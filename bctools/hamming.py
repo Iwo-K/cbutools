@@ -34,7 +34,7 @@ def hamming_distance(s1, s2):
     return sum(el1 != el2 for el1, el2 in zip(s1, s2))
 
 
-def hamming_filter(counts, threshold=3):
+def hamming_filter(counts, min_distance=3):
     """Filters out barcodes based on Hamming distance.
 
     Calculates hamming distances between each pair of barcodes, then removes
@@ -44,7 +44,7 @@ def hamming_filter(counts, threshold=3):
     ----------
     counts : pd.Series object
         sequences in the index and counts in values
-    threshold : int
+    min_distance : int
         Minimum hamming distance threshold, barcodes with distance < threshold are discarded
     Returns
     -------
@@ -52,7 +52,7 @@ def hamming_filter(counts, threshold=3):
         Filtered CBUSeries
 
     """
-    print(f"Filtering using Hamming distance threshold of {threshold}...")
+    print(f"Filtering using Hamming distance threshold of {min_distance}...")
     seqs = counts.index.values
     seqs = seqs.astype(str)
     n = len(seqs)
@@ -72,7 +72,7 @@ def hamming_filter(counts, threshold=3):
         xcount = counts[x]  # integer
 
         row = hdist[i, :]  # np.array
-        belowtr = np.nonzero(row < threshold)[0]  # np array
+        belowtr = np.nonzero(row < min_distance)[0]  # np array
         belowtr = belowtr[belowtr != i]
         belowtr_counts = counts.iloc[belowtr]  # pd.Series
 

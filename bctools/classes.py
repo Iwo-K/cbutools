@@ -14,13 +14,14 @@ def load_barcodes(file):
     """Loads a .csv files with barcodes and convert automatically to CBUSeries or CBseries"""
 
     data = pd.read_csv(file)
-    if all(data.columns == ['CBC', 'Barcode', 'UMI', '0']):
+    cols = data.columns.tolist()
+    if cols == ['CBC', 'Barcode', 'UMI', '0']:
         ser = pd.Series(data['0'])
         ind =  pd.MultiIndex.from_frame(data.loc[:, ['CBC', 'Barcode', 'UMI']])
         ser.index = ind
         return CBUSeries(ser)
 
-    elif all(data.columns == ['CBC', 'Barcode', '0']):
+    elif cols == ['CBC', 'Barcode', '0']:
         ser = pd.Series(data['0'])
         ind =  pd.MultiIndex.from_frame(data.loc[:, ['CBC', 'Barcode']])
         ser.index = ind
@@ -101,7 +102,7 @@ class CBSeries(pd.Series):
     def plot_hist(self, groupby='Barcode', *args, **kwargs):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
-    def assign_barcode(self, dispr_filter=None):
+    def assign_barcodes(self, dispr_filter=None):
         """Assigns barcode"""
 
         df = pd.DataFrame()
@@ -113,7 +114,7 @@ class CBSeries(pd.Series):
                 counts = counts[counts > (dispr_filter * max_counts)]
             barcodes = counts.index.tolist()
             row = pd.DataFrame({'Barcode_list' : [barcodes], 'Barcode_n' : len(barcodes)}, index=[i])
-            df = df.append(row)
+            df = pd.concat([df, (row)])
 
         def catl(x):
             ''' Function for concatenating strings '''
@@ -144,13 +145,21 @@ class CBUSeries(pd.Series):
         labels = ["CBC", "Barcode", "UMI"]
         return filter_series(self, groupby=groupby, labels=labels, min_counts=min_counts)
 
-    def filter_by_hamming(self, which="Barcode", threshold=2, collapse=True):
+    def filter_by_hamming(self, which="Barcode", min_distance=2):
 
         counts = self.groupby([which]).sum()
-        tokeep, torejet, ties = hamming_filter(counts=counts, threshold=threshold)
+        tokeep, toreject, ties = hamming_filter(counts=counts, min_distance=min_distance)
         if len(ties) > 0:
             print(f"Ties detected between: {ties}")
-        return self.loc[:, tokeep, :]
+
+        if which == 'CBC':
+            return self.loc[tokeep, :, :]
+
+        if which == 'Barcode':
+            return self.loc[:, tokeep, :]
+
+        if which == 'UMI':
+            return self.loc[:, :, tokeep]
 
     def count_UMI(self):
         return CBSeries(self.groupby(["CBC", "Barcode"]).size())
