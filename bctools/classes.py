@@ -5,8 +5,11 @@ from .hamming import hamming_filter
 from math import ceil
 from functools import wraps
 
-# TODO how to add check that the indices are names correctly and in the right order? (maybe add an if clause and then the inex check?)
-# maybe decorators? I have failed so far in the __init__ modification method
+# TODO Is ther a better way to implemetn the index check? Somehow modify the __new__ or __init__ functions
+# to automatically convert the class e.g. CBUSeries to CBSeries if there are only CBC and Barcode indices or
+# or incompatible indices default to pd.Series
+# For now added decorators which provide good protection against index changes but need to be repeated for all
+# methods (can also write a loop do that anyway, for instance decorate the class itself)
 #
 # TODO add simple summary print (no of barcodes, no of barcodes per cell with some deviations?)
 # probably best if this summary is stored but then updated with every filtering step
@@ -124,7 +127,7 @@ class CBSeries(pd.Series):
             counts = self[i]
             if dispr_filter is not None:
                 max_counts = max(counts)
-                counts = counts[counts > (dispr_filter * max_counts)]
+                counts = counts[counts >= (dispr_filter * max_counts)]
             barcodes = counts.index.tolist()
             row = pd.DataFrame({'Barcode_list' : [barcodes], 'Barcode_n' : len(barcodes)}, index=[i])
             df = pd.concat([df, (row)])
