@@ -5,16 +5,6 @@ from .hamming import hamming_filter
 from math import ceil
 from functools import wraps
 
-# TODO Is ther a better way to implemetn the index check? Somehow modify the __new__ or __init__ functions
-# to automatically convert the class e.g. CBUSeries to CBSeries if there are only CBC and Barcode indices or
-# or incompatible indices default to pd.Series
-# For now added decorators which provide good protection against index changes but need to be repeated for all
-# methods (can also write a loop do that anyway, for instance decorate the class itself)
-#
-# TODO add simple summary print (no of barcodes, no of barcodes per cell with some deviations?)
-# probably best if this summary is stored but then updated with every filtering step
-
-
 def load_barcodes(file):
     """Loads a .csv files with barcodes and convert automatically to CBUSeries or CBseries"""
 
@@ -90,6 +80,13 @@ def plot_groupby_hist(series, groupby, bins=50, vmax=None):
     plt.show()
 
 
+def plot_barcodes_no(x):
+    x = x.sort_values(ascending=False)
+    plt.plot(range(len(x.index)), x)
+    ax = plt.gca()
+    ax.yaxis.get_major_locator().set_params(integer=True)
+    plt.show()
+
 def check_CB_index(f):
     """Decorator to check the index before running some CBU-specific methods"""
 
@@ -148,6 +145,11 @@ class CBSeries(pd.Series):
         df["Barcode"] = df["Barcode_list"].apply(func=catl)
         return df
 
+    @check_CB_index
+    def plot_barcode_no(self):
+        x = self.groupby('CBC').size()
+        plot_barcodes_no(x)
+
     def save_barcodes(self, *args, **kwargs):
         self.to_csv(*args, **kwargs)
 
@@ -178,6 +180,12 @@ class CBUSeries(pd.Series):
 
     def plot_hist(self, groupby="Barcode", *args, **kwargs):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
+
+    @check_CBU_index
+    def plot_barcode_no(self):
+        x = self.count_UMI()
+        x = x.groupby('CBC').size()
+        plot_barcodes_no(x)
 
     @check_CBU_index
     def filter_by_reads(self, groupby="Barcode", min_counts=0):
