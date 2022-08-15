@@ -127,7 +127,7 @@ class CBSeries(pd.Series):
 
         df = pd.DataFrame()
 
-        for i in self.index.levels[0]:
+        for i in self.index.get_level_values('CBC').unique():
             counts = self[i]
             if dispr_filter is not None:
                 max_counts = max(counts)
