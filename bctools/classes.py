@@ -5,6 +5,7 @@ from .hamming import hamming_filter
 from math import ceil
 from functools import wraps
 
+
 def load_barcodes(file):
     """Loads a .csv files with barcodes and convert automatically to CBUSeries or CBseries"""
 
@@ -87,6 +88,7 @@ def plot_barcodes_no(x):
     ax.yaxis.get_major_locator().set_params(integer=True)
     plt.show()
 
+
 def check_CB_index(f):
     """Decorator to check the index before running some CBU-specific methods"""
 
@@ -127,7 +129,7 @@ class CBSeries(pd.Series):
 
         df = pd.DataFrame()
 
-        for i in self.index.get_level_values('CBC').unique():
+        for i in self.index.get_level_values("CBC").unique():
             counts = self[i]
             if dispr_filter is not None:
                 max_counts = max(counts)
@@ -147,8 +149,25 @@ class CBSeries(pd.Series):
 
     @check_CB_index
     def plot_barcode_no(self):
-        x = self.groupby('CBC').size()
+        x = self.groupby("CBC").size()
         plot_barcodes_no(x)
+
+    @check_CB_index
+    def summary(self):
+        total_umi = self.sum()
+        total_CBC = len(self.index.get_level_values("CBC").unique())
+        total_barcode = len(self.index.get_level_values("Barcode").unique())
+
+        x = self.groupby("CBC").size()
+        av_barcode_per_cell = x.mean()
+
+        print(
+            f"Total UMIs: {total_umi}\n"
+            f"Total CBCs: {total_CBC}\n"
+            f"Total Barcodes: {total_barcode}\n"
+            f"Mean barcode per cell: {av_barcode_per_cell}"
+        )
+
 
     def save_barcodes(self, *args, **kwargs):
         self.to_csv(*args, **kwargs)
@@ -169,6 +188,7 @@ def check_CBU_index(f):
 class CBUSeries(pd.Series):
     def __init__(self, *args, **kwargs):
         super(CBUSeries, self).__init__(*args, **kwargs)
+        self.summary_data = {}
         if not self.index.is_unique:
             raise Exception("Index is not unique (convert to pd.Series)")
 
@@ -184,13 +204,14 @@ class CBUSeries(pd.Series):
     @check_CBU_index
     def plot_barcode_no(self):
         x = self.count_UMI()
-        x = x.groupby('CBC').size()
+        x = x.groupby("CBC").size()
         plot_barcodes_no(x)
 
     @check_CBU_index
     def filter_by_reads(self, groupby="Barcode", min_counts=0):
         """Filters by minimum expected number of reads. With the groupby column, level combinations are pertmitted"""
         labels = ["CBC", "Barcode", "UMI"]
+
         return filter_series(
             self, groupby=groupby, labels=labels, min_counts=min_counts
         )
@@ -217,6 +238,25 @@ class CBUSeries(pd.Series):
     @check_CBU_index
     def count_UMI(self):
         return CBSeries(self.groupby(["CBC", "Barcode"]).size())
+
+    @check_CBU_index
+    def summary(self):
+        total_reads = self.sum()
+        total_umi = len(self.index)
+        total_CBC = len(self.index.get_level_values("CBC").unique())
+        total_barcode = len(self.index.get_level_values("Barcode").unique())
+
+        x = self.count_UMI()
+        x = x.groupby("CBC").size()
+        av_barcode_per_cell = x.mean()
+
+        print(
+            f"Total reads: {total_reads}\n"
+            f"Total UMIs: {total_umi}\n"
+            f"Total CBCs: {total_CBC}\n"
+            f"Total Barcodes: {total_barcode}\n"
+            f"Mean barcode per cell: {av_barcode_per_cell}"
+        )
 
     def save_barcodes(self, *args, **kwargs):
         self.to_csv(*args, **kwargs)
