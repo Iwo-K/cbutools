@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from subprocess import run
 import dnaio
-from .classes import CBUSeries
+from .cbu import CBUSeries
 
 
 def process_larry(files):
@@ -19,11 +19,6 @@ def process_larry(files):
     out2 = run(command2, capture_output=True, text=True, shell=True)
     print(out2.stderr)
     print(out2.stdout)
-
-    # Reading the trimmed fastq files
-    # A more efficient way will be to get the preallocate the sizes given the number of reads comming from cutadapt, for now just running a list
-    # bars = np.array() #allocate the size
-    # cbcumis = np.array()
 
     # Accumulating everything in a dictionary with tuples as keys
     counts = {}
