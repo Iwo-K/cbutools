@@ -63,7 +63,7 @@ def filter_series(series, groupby=None, labels=["CBC", "Barcode", "UMI"], min_co
     return series[indexSUB.isin(filtered.index)]
 
 
-def plot_groupby_hist(series, groupby, bins=50, vmax=None):
+def plot_groupby_hist(series, groupby, bins=50, vmax=None, title=''):
     """Plots histogram of reads, grouped as indicated in the groupby argument"""
 
     grouped = series.groupby(groupby).sum()
@@ -77,7 +77,7 @@ def plot_groupby_hist(series, groupby, bins=50, vmax=None):
     plt.xticks(range(ticks), logpos)
     # plt.xscale('log')
     plt.yscale("log")
-    plt.title(f"Number of reads per {groupby} combination")
+    plt.title(title)
     plt.show()
 
 
@@ -120,7 +120,9 @@ class CBSeries(pd.Series):
             self, groupby=groupby, labels=labels, min_counts=min_counts
         )
 
-    def plot_hist(self, groupby="Barcode", *args, **kwargs):
+    def plot_hist(self, groupby="Barcode",
+                  title="Number of UMIs per {groupby} combination",
+                  *args, **kwargs):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
     @check_CB_index
@@ -134,9 +136,9 @@ class CBSeries(pd.Series):
             if dispr_filter is not None:
                 max_counts = max(counts)
                 counts = counts[counts >= (dispr_filter * max_counts)]
-            barcodes = counts.index.tolist()
+            barcodes = tuple(counts.index.tolist())
             row = pd.DataFrame(
-                {"Barcode_list": [barcodes], "Barcode_n": len(barcodes)}, index=[i]
+                {"Barcode_tuple": [barcodes], "Barcode_n": len(barcodes)}, index=[i]
             )
             df = pd.concat([df, (row)])
 
@@ -144,7 +146,7 @@ class CBSeries(pd.Series):
             """Function for concatenating strings"""
             return "-".join(x)
 
-        df["Barcode"] = df["Barcode_list"].apply(func=catl)
+        df["Barcode"] = df["Barcode_tuple"].apply(func=catl)
         return df
 
     @check_CB_index
@@ -198,7 +200,9 @@ class CBUSeries(pd.Series):
             raise Exception("Index is not unique (convert to pd.Series)")
         return CBUSeries
 
-    def plot_hist(self, groupby="Barcode", *args, **kwargs):
+    def plot_hist(self, groupby="Barcode",
+                  title="Number of reads per {groupby} combination",
+                  *args, **kwargs):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
     @check_CBU_index
