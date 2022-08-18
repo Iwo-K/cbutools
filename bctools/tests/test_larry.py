@@ -52,3 +52,20 @@ def test_count():
     ref = ref.sort_index()
 
     assert cbu.equals(ref)
+
+def test_count_CBC():
+    file1 = str(HERE / "data/mock_larry_counting_r1.fq")
+    file2 = str(HERE / "data/mock_larry_counting_r2.fq")
+    files = {"r1": file1, "r2": file2}
+    cbu = bc.get_barcodes(files, valid_CBC=['TTGGAGAAGTATTCCG', 'AAAAAGAAGTATTCCG']).sort_index()
+
+    ind = pd.MultiIndex.from_tuples([
+        ('TTGGAGAAGTATTCCG', 'GGGGTGCCGCCATTGGACTCGAGAAGCCGTTGGCAGGGTT', 'CGATCAGATCCC'),
+        ('AAAAAGAAGTATTCCG', 'CCCCTGGGGGCATTGGACTCGAGAAGCCGTTGGCAGAAAA', 'CGATCAGATAAA'),
+        ('AAAAAGAAGTATTCCG', 'CCCCTGGGGGCATTGGACTCGAGAAGCCGTTGGCAGAAAA', 'CGATCAGATTTT')
+        # ('', '', ''),
+    ])
+    ref = pd.Series([4,5,3], index=ind)
+    ref = ref.sort_index()
+
+    assert cbu.equals(ref)
