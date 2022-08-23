@@ -23,17 +23,19 @@ def process_larry(files, valid_CBC=None):
     def read_barCBCUMI(x):
         bar = x[0].sequence
         cbcumi = x[1].sequence
-        if (len(bar) == 40) and (len(cbcumi) == 28):  # Only keeping LARRY barcodes with 40nt and CBC-UMI with 28
+        if (len(bar) == 40) and (
+            len(cbcumi) == 28
+        ):  # Only keeping LARRY barcodes with 40nt and CBC-UMI with 28
             cbc = cbcumi[:16]
             umi = cbcumi[16:28]
             k = (cbc, bar, umi)
             return k
         else:
-            return 'WRONG_LEN'
+            return "WRONG_LEN"
 
     # Accumulating everything in a dictionary with tuples as keys
     if valid_CBC is not None:
-        counts = {'WRONG_LEN' : 0, 'CBC_ABSENT' : 0}
+        counts = {"WRONG_LEN": 0, "CBC_ABSENT": 0}
         with dnaio.open(file1="bar2.fq", file2="cbcumi2.fq") as reader:
             for record in reader:
                 k = read_barCBCUMI(record)
@@ -41,12 +43,12 @@ def process_larry(files, valid_CBC=None):
                     if not k in counts:
                         counts[k] = 0
                     counts[k] += 1
-                elif k == 'WRONG_LEN':
-                    counts['WRONG_LEN'] += 1
+                elif k == "WRONG_LEN":
+                    counts["WRONG_LEN"] += 1
                 else:
-                    counts['CBC_ABSENT'] += 1
+                    counts["CBC_ABSENT"] += 1
     else:
-        counts = {'WRONG_LEN' : 0, 'CBC_ABSENT' : 0}
+        counts = {"WRONG_LEN": 0, "CBC_ABSENT": 0}
         with dnaio.open(file1="bar2.fq", file2="cbcumi2.fq") as reader:
             for record in reader:
                 k = read_barCBCUMI(record)
@@ -54,11 +56,10 @@ def process_larry(files, valid_CBC=None):
                     counts[k] = 0
                 counts[k] += 1
 
-
-    wronglen_count = counts['WRONG_LEN']
-    cbcabsent_count = counts['CBC_ABSENT']
-    del counts['WRONG_LEN']
-    del counts['CBC_ABSENT']
+    wronglen_count = counts["WRONG_LEN"]
+    cbcabsent_count = counts["CBC_ABSENT"]
+    del counts["WRONG_LEN"]
+    del counts["CBC_ABSENT"]
 
     index = pd.MultiIndex.from_tuples(
         [i for i in counts.keys()], names=("CBC", "Barcode", "UMI")
@@ -69,7 +70,11 @@ def process_larry(files, valid_CBC=None):
     valid_count = counts.sum()
     print("============================================================")
     print("Counting LARRY barcodes and CBC UMIs")
-    print(f"Reads with wrong length: {wronglen_count} ({wronglen_count/total_count*100:.2f}%)")
-    print(f"Reads with CBC absent in the list: {cbcabsent_count} ({cbcabsent_count/total_count*100:.2f}%)")
+    print(
+        f"Reads with wrong length: {wronglen_count} ({wronglen_count/total_count*100:.2f}%)"
+    )
+    print(
+        f"Reads with CBC absent in the list: {cbcabsent_count} ({cbcabsent_count/total_count*100:.2f}%)"
+    )
     print(f"Valid reads: {valid_count} ({valid_count/total_count*100:.2f}%)")
     return counts

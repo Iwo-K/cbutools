@@ -63,7 +63,7 @@ def filter_series(series, groupby=None, labels=["CBC", "Barcode", "UMI"], min_co
     return series[indexSUB.isin(filtered.index)]
 
 
-def plot_groupby_hist(series, groupby, bins=50, vmax=None, title=''):
+def plot_groupby_hist(series, groupby, bins=50, vmax=None, title=""):
     """Plots histogram of reads, grouped as indicated in the groupby argument"""
 
     grouped = series.groupby(groupby).sum()
@@ -120,9 +120,13 @@ class CBSeries(pd.Series):
             self, groupby=groupby, labels=labels, min_counts=min_counts
         )
 
-    def plot_hist(self, groupby="Barcode",
-                  title="Number of UMIs per {groupby} combination",
-                  *args, **kwargs):
+    def plot_hist(
+        self,
+        groupby="Barcode",
+        title="Number of UMIs per {groupby} combination",
+        *args,
+        **kwargs,
+    ):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
     @check_CB_index
@@ -170,7 +174,6 @@ class CBSeries(pd.Series):
             f"Mean barcode per cell: {av_barcode_per_cell}"
         )
 
-
     def save_barcodes(self, *args, **kwargs):
         self.to_csv(*args, **kwargs)
 
@@ -200,9 +203,13 @@ class CBUSeries(pd.Series):
             raise Exception("Index is not unique (convert to pd.Series)")
         return CBUSeries
 
-    def plot_hist(self, groupby="Barcode",
-                  title="Number of reads per {groupby} combination",
-                  *args, **kwargs):
+    def plot_hist(
+        self,
+        groupby="Barcode",
+        title="Number of reads per {groupby} combination",
+        *args,
+        **kwargs,
+    ):
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
     @check_CBU_index

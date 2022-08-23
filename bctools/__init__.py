@@ -9,10 +9,7 @@ from . import cbu
 from .cbu import load_barcodes
 
 
-def get_barcodes(files,
-                 type="larry",
-                 valid_CBC=None,
-                 save="barcodes.csv"):
+def get_barcodes(files, type="larry", valid_CBC=None, save="barcodes.csv"):
     """Describe."""
     if type == "larry":
         counts = process_larry(files, valid_CBC=valid_CBC)
