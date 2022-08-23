@@ -2,6 +2,7 @@
 from pathlib import Path
 import bctools as bc
 import pandas as pd
+import os.path
 
 HERE = Path(__file__).parent
 
@@ -11,6 +12,19 @@ def test_load():
     file2 = str(HERE / "data/SLX-22398.SITTA1.s_1.r_2_small.fq")
     files = {"r1": file1, "r2": file2}
     bcu = bc.get_barcodes(files)
+
+
+def test_debug():
+    file1 = str(HERE / "data/SLX-22398.SITTA1.s_1.r_1_small.fq")
+    file2 = str(HERE / "data/SLX-22398.SITTA1.s_1.r_2_small.fq")
+    files = {"r1": file1, "r2": file2}
+    bcu, tempDIR = bc.larry.process_larry(files, debug=True)
+
+    assert isinstance(bcu, bc.cbu.CBUSeries)
+    assert os.path.isfile(tempDIR.name + '/cbcumi1.fq')
+    assert os.path.isfile(tempDIR.name + '/bar1.fq')
+    assert os.path.isfile(tempDIR.name + '/cbcumi2.fq')
+    assert os.path.isfile(tempDIR.name + '/bar2.fq')
 
 
 def test_cutadapt():

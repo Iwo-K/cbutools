@@ -5,17 +5,26 @@ import pandas as pd
 from subprocess import run
 import dnaio
 from .cbu import CBUSeries
+from tempfile import TemporaryDirectory
 
 
-def process_larry(files, valid_CBC=None):
+def process_larry(files, valid_CBC=None, debug=False):
+    # Making a temporary directory
+    temp = TemporaryDirectory(prefix='.intermediate_cutadapt_', dir='./')
+    tempDIR = temp.name + '/'
+
     # Trimming the files with cutadapt to retain only larry matching barcodes
-    command1 = f'cutadapt -g TTGCTAGGAGAGACCATATG...ATGTCTGGATCCGATATCGC -o bar1.fq -p cbcumi1.fq {files["r2"]} {files["r1"]} --discard-untrimmed --pair-filter=both'
+    command1 = (f'cutadapt -g TTGCTAGGAGAGACCATATG...ATGTCTGGATCCGATATCGC '
+               f'-o {tempDIR}bar1.fq -p {tempDIR}cbcumi1.fq {files["r2"]} {files["r1"]} '
+               f'--discard-untrimmed --pair-filter=both')
     # Optionally save the report to json format with  --json=test.cutadapt.json
     out1 = run(command1, capture_output=True, text=True, shell=True)
     print(out1.stderr)
     print(out1.stdout)
 
-    command2 = f'cutadapt -g "NNNNTGNNNNCANNNNACNNNNGANNNNGTNNNNAGNNNN;min_overlap=36" -o bar2.fq -p cbcumi2.fq bar1.fq cbcumi1.fq --discard-untrimmed --action=retain --pair-filter=both'
+    command2 = (f'cutadapt -g "NNNNTGNNNNCANNNNACNNNNGANNNNGTNNNNAGNNNN;min_overlap=36" '
+                f'-o {tempDIR}bar2.fq -p {tempDIR}cbcumi2.fq {tempDIR}bar1.fq {tempDIR}cbcumi1.fq '
+                f'--discard-untrimmed --action=retain --pair-filter=both')
     out2 = run(command2, capture_output=True, text=True, shell=True)
     print(out2.stderr)
     print(out2.stdout)
@@ -34,9 +43,11 @@ def process_larry(files, valid_CBC=None):
             return "WRONG_LEN"
 
     # Accumulating everything in a dictionary with tuples as keys
+    barfile = f"{tempDIR}bar2.fq"
+    cbufile = f"{tempDIR}cbcumi2.fq"
     if valid_CBC is not None:
         counts = {"WRONG_LEN": 0, "CBC_ABSENT": 0}
-        with dnaio.open(file1="bar2.fq", file2="cbcumi2.fq") as reader:
+        with dnaio.open(file1=barfile, file2=cbufile) as reader:
             for record in reader:
                 k = read_barCBCUMI(record)
                 if k[0] in valid_CBC:
@@ -49,7 +60,7 @@ def process_larry(files, valid_CBC=None):
                     counts["CBC_ABSENT"] += 1
     else:
         counts = {"WRONG_LEN": 0, "CBC_ABSENT": 0}
-        with dnaio.open(file1="bar2.fq", file2="cbcumi2.fq") as reader:
+        with dnaio.open(file1=barfile, file2=cbufile) as reader:
             for record in reader:
                 k = read_barCBCUMI(record)
                 if not k in counts:
@@ -73,8 +84,11 @@ def process_larry(files, valid_CBC=None):
     print(
         f"Reads with wrong length: {wronglen_count} ({wronglen_count/total_count*100:.2f}%)"
     )
-    print(
-        f"Reads with CBC absent in the list: {cbcabsent_count} ({cbcabsent_count/total_count*100:.2f}%)"
-    )
+    print(f"Reads with CBC absent in the list: {cbcabsent_count}"
+          f"({cbcabsent_count/total_count*100:.2f}%)")
     print(f"Valid reads: {valid_count} ({valid_count/total_count*100:.2f}%)")
-    return counts
+
+    if debug:
+        return counts, temp
+    else:
+        return counts
