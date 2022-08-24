@@ -8,25 +8,29 @@ authors = [{name = "Iwo Kucinski", email = "iwo.kucinski@gmail.com"}]
 description = "Tools for recovery of expressed barcodes from 10x scRNA-Seq data"
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: MIT License"]
-dynamic = ["version", "description"]
-version = "0.0.1"
+version = "0.1"
 requires-python = ">=3.8"
 dependencies = [
     "cutadapt",
     "dnaio",
     "numpy",
     "matplotlib",
-    "scipy"
+    "scipy",
+    "pandas"
 ]
 
 [project.optional-dependencies]
 dev = [
+    "bctools[report]",
     "pytest",
     "black"
 ]
-
 report = [
    "jupyter",
    "papermill",
    "nbconvert",
 ]
+
+[tool.pytest.ini_options]
+python_files = "test_*.py"
+testpaths = "bctools/tests/"
