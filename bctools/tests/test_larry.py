@@ -21,10 +21,10 @@ def test_debug():
     bcu, tempDIR = bc.larry.process_larry(files, debug=True)
 
     assert isinstance(bcu, bc.cbu.CBUSeries)
-    assert os.path.isfile(tempDIR.name + '/cbcumi1.fq')
-    assert os.path.isfile(tempDIR.name + '/bar1.fq')
-    assert os.path.isfile(tempDIR.name + '/cbcumi2.fq')
-    assert os.path.isfile(tempDIR.name + '/bar2.fq')
+    assert os.path.isfile(tempDIR.name + "/cbcumi1.fq")
+    assert os.path.isfile(tempDIR.name + "/bar1.fq")
+    assert os.path.isfile(tempDIR.name + "/cbcumi2.fq")
+    assert os.path.isfile(tempDIR.name + "/bar2.fq")
 
 
 def test_cutadapt():

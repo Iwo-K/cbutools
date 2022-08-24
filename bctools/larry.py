@@ -10,21 +10,25 @@ from tempfile import TemporaryDirectory
 
 def process_larry(files, valid_CBC=None, debug=False):
     # Making a temporary directory
-    temp = TemporaryDirectory(prefix='.intermediate_cutadapt_', dir='./')
-    tempDIR = temp.name + '/'
+    temp = TemporaryDirectory(prefix=".intermediate_cutadapt_", dir="./")
+    tempDIR = temp.name + "/"
 
     # Trimming the files with cutadapt to retain only larry matching barcodes
-    command1 = (f'cutadapt -g TTGCTAGGAGAGACCATATG...ATGTCTGGATCCGATATCGC '
-               f'-o {tempDIR}bar1.fq -p {tempDIR}cbcumi1.fq {files["r2"]} {files["r1"]} '
-               f'--discard-untrimmed --pair-filter=both')
+    command1 = (
+        f"cutadapt -g TTGCTAGGAGAGACCATATG...ATGTCTGGATCCGATATCGC "
+        f'-o {tempDIR}bar1.fq -p {tempDIR}cbcumi1.fq {files["r2"]} {files["r1"]} '
+        f"--discard-untrimmed --pair-filter=both"
+    )
     # Optionally save the report to json format with  --json=test.cutadapt.json
     out1 = run(command1, capture_output=True, text=True, shell=True)
     print(out1.stderr)
     print(out1.stdout)
 
-    command2 = (f'cutadapt -g "NNNNTGNNNNCANNNNACNNNNGANNNNGTNNNNAGNNNN;min_overlap=36" '
-                f'-o {tempDIR}bar2.fq -p {tempDIR}cbcumi2.fq {tempDIR}bar1.fq {tempDIR}cbcumi1.fq '
-                f'--discard-untrimmed --action=retain --pair-filter=both')
+    command2 = (
+        f'cutadapt -g "NNNNTGNNNNCANNNNACNNNNGANNNNGTNNNNAGNNNN;min_overlap=36" '
+        f"-o {tempDIR}bar2.fq -p {tempDIR}cbcumi2.fq {tempDIR}bar1.fq {tempDIR}cbcumi1.fq "
+        f"--discard-untrimmed --action=retain --pair-filter=both"
+    )
     out2 = run(command2, capture_output=True, text=True, shell=True)
     print(out2.stderr)
     print(out2.stdout)
@@ -84,8 +88,10 @@ def process_larry(files, valid_CBC=None, debug=False):
     print(
         f"Reads with wrong length: {wronglen_count} ({wronglen_count/total_count*100:.2f}%)"
     )
-    print(f"Reads with CBC absent in the list: {cbcabsent_count}"
-          f"({cbcabsent_count/total_count*100:.2f}%)")
+    print(
+        f"Reads with CBC absent in the list: {cbcabsent_count}"
+        f"({cbcabsent_count/total_count*100:.2f}%)"
+    )
     print(f"Valid reads: {valid_count} ({valid_count/total_count*100:.2f}%)")
 
     if debug:

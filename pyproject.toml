@@ -11,10 +11,22 @@ classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version", "description"]
 version = "0.0.1"
 requires-python = ">=3.8"
-dependencies = ["cutadapt",
-                "numpy",
-                "matplotlib",
-                "scipy"]
+dependencies = [
+    "cutadapt",
+    "dnaio",
+    "numpy",
+    "matplotlib",
+    "scipy"
+]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = [
+    "pytest",
+    "black"
+]
+
+report = [
+   "jupyter",
+   "papermill",
+   "nbconvert",
+]
