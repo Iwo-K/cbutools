@@ -1,5 +1,3 @@
-#!/usr/bin/env ipython
-
 import numpy as np
 import pandas as pd
 from subprocess import run
@@ -9,6 +7,30 @@ from tempfile import TemporaryDirectory
 
 
 def process_larry(files, valid_CBC=None, debug=False):
+    """Retrieve CBUSeries from LARRY fastq files
+
+    Processes 10x fastq files (read1 and read2) containing LARRY barcode
+    sequences. Cutadapt extracts the sequences matching the barcodes (written
+    into temporary files). Then the cell barcodes (CBC), LARRY barcodes and UMIs
+    are extracted, counted and assembled into a CBUSeries object.
+
+    Parameters
+    ----------
+    files : dict
+        Dictionary with paths to fast files, needs to have 'r1' and 'r2' keys
+    valid_CBC : Optional[list, np.ndarray]
+        List or array with valid cell barcodes. Supplying this argument is
+        recommended as it can dramatically reduce the returned object size.
+    debug : bool
+        If true the the function returns also the temporary
+        directory object, which prevents file cleanup and thus allows inspection.
+
+    Returns
+    -------
+    CBUseries or tuple (CBUSeries, TemporaryDirectory)
+        Returns a CBUSeries object by default or a tuple containig also TemporaryDirectory if debug=True
+
+    """
     # Making a temporary directory
     temp = TemporaryDirectory(prefix=".intermediate_cutadapt_", dir="./")
     tempDIR = temp.name + "/"

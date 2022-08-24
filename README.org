@@ -11,3 +11,11 @@ NNNNTGNNNNCANNNNACNNNNGANNNNGTNNNNAGNNNN
 
 * notes
 In paired-end mode, Cutadapt checks whether the input files are properly paired. An error is raised if one of the files contains more reads than the other or if the read names in the two files do not match.
+
+* Report testing
+run
+#+begin_src bash
+pytest --basetemp=mydir
+#+end_src
+
+to save the reports to a chosen location for inspection

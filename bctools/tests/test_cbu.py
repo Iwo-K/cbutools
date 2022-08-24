@@ -10,12 +10,14 @@ HERE = Path(__file__).parent
 
 @pytest.fixture
 def cbu_example():
+    """A small example of CBUSeries save"""
     x = bc.load_barcodes(HERE / "data/cbu_raw.csv")
     return x
 
 
 @pytest.fixture
 def cb_example():
+    """A small example of CBSeries save"""
     x = bc.load_barcodes(HERE / "data/cbu_umicount.csv")
     return x
 
@@ -32,7 +34,7 @@ def test_hamming_filter(monkeypatch):
     pre = bc.load_barcodes(HERE / "data/cbu_readfiltered.csv").sort_index()
     ref = bc.load_barcodes(HERE / "data/cbu_hamfiltered.csv").sort_index()
 
-    # This prevent the plot from appearig
+    # The monkeypatch prevents the plot from appearing
     monkeypatch.setattr(plt, "show", lambda: None)
     totest = pre.filter_by_hamming(min_distance=3).sort_index()
 
@@ -72,6 +74,7 @@ def test_assign_barcodes():
 
 
 def test_assign_barcodes_dispr():
+    """This is the same test as test_assign_barcodes but checks also the dispr_filter argument"""
     pre = bc.load_barcodes(HERE / "data/cbu_umifiltered.csv").sort_index()
     ref = pd.read_csv(HERE / "data/cbu_assigned_dispr.csv")
     totest = pre.assign_barcodes(dispr_filter=0.51)

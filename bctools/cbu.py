@@ -7,7 +7,26 @@ from functools import wraps
 
 
 def load_barcodes(file):
-    """Loads a .csv files with barcodes and convert automatically to CBUSeries or CBseries"""
+    """Load barcodes CSV file
+
+    Loads CBC,Barcodes,UMI or CBC, Barcodes CSV files into a CBUSeries or
+    CBSeries respectively
+
+    Parameters
+    ----------
+    file : PATH or str
+        Path to the file
+
+    Raises
+    ------
+    Exception
+        Raised if files does not look like CBUSeries or CBseries
+
+    Returns
+    -------
+    CBUSeries or CBseries
+
+    """
 
     data = pd.read_csv(file)
     cols = data.columns.tolist()
@@ -28,8 +47,33 @@ def load_barcodes(file):
 
 
 def filter_series(series, groupby=None, labels=["CBC", "Barcode", "UMI"], min_counts=0):
-    """Filter a series (pd.Series, CBSeries or CBUSeries) based on counts,
-    grouped by level or level combination of multiindex"""
+    """Filter a Series object by counts
+
+    Filters pd.Series, CBUSeries or CBSeries by counts grouped by categories (in the index): CBC, Barcode,
+    UMI or combinaion of these categories
+
+    Parameters
+    ----------
+    series : CBUSeries or CBSeries
+        Series to be filtered
+    groupby : list or str
+        list with combination of categories or a string with a single category
+    labels : list
+        list of category names (labels) to consider for grouping (correspond to the index)
+    min_counts : int
+        only entries with >= min_counts are kept
+
+    Raises
+    ------
+    Exception
+        Raised if groupby has invalid arguments
+
+    Returns
+    -------
+    pd.Series or CBUSeries or CBSeries
+        Filtered Series object
+
+    """
 
     # If none or all three levels are supplied - just filter the values and return
     if (groupby == None) or sorted(groupby) == sorted(labels):
@@ -63,11 +107,29 @@ def filter_series(series, groupby=None, labels=["CBC", "Barcode", "UMI"], min_co
     return series[indexSUB.isin(filtered.index)]
 
 
-def plot_groupby_hist(series, groupby, bins=50, vmax=None, title=""):
-    """Plots histogram of reads, grouped as indicated in the groupby argument"""
+def plot_groupby_hist(series, groupby, bins=50, vmax=None, title="", *args, **kwargs):
+    """Plot histogram of grouped counts
+
+    Plots a histogram of counts grouped by indicated categories or their
+    combinations
+
+    Parameters
+    ----------
+    series : pd.Series or CBUSeries or CBSeries
+        A series object with counts
+    groupby : list or str
+        list with combination of categories or a string with a single category (should be in the Series index))
+    bins : int
+        number of bins in the histogram
+    vmax : int or float
+        maximum number on the X axis
+    title : str
+        plot title
+
+    """
 
     grouped = series.groupby(groupby).sum()
-    plt.hist(np.log10(grouped), bins=bins)
+    n, bins, patches = plt.hist(np.log10(grouped), bins=bins, *args, **kwargs)
 
     if vmax is None:
         vmax = grouped.max()
@@ -82,6 +144,15 @@ def plot_groupby_hist(series, groupby, bins=50, vmax=None, title=""):
 
 
 def plot_barcodes_no(x):
+    """Plot barcode number per cell
+
+    Parameters
+    ----------
+    x : pd.Series or CBUSeries or CBSeries
+        Series with number of barcodes per cell
+
+    """
+
     x = x.sort_values(ascending=False)
     plt.plot(range(len(x.index)), x)
     ax = plt.gca()
@@ -90,7 +161,19 @@ def plot_barcodes_no(x):
 
 
 def check_CB_index(f):
-    """Decorator to check the index before running some CBU-specific methods"""
+    """Decorator - checks if CBSeries index is valid
+
+    Parameters
+    ----------
+    f : function
+        function running on CBSeries that requires valid index
+
+    Raises
+    ------
+    Exception
+        CBSeries index is invalid
+
+    """
 
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -102,6 +185,23 @@ def check_CB_index(f):
 
 
 class CBSeries(pd.Series):
+    """CBC-Barcode Series with counts
+
+    Class inheriting from pd.Series, indexed by CBC and Barcode, typically
+    containing UMI counts.
+
+    Parameters
+    ----------
+    pd.Series : pd.Series
+        pandas Series object
+
+    Raises
+    ------
+    Exception
+        Index invalid
+
+    """
+
     def __init__(self, *args, **kwargs):
         super(CBSeries, self).__init__(*args, **kwargs)
         if not self.index.is_unique:
@@ -115,6 +215,21 @@ class CBSeries(pd.Series):
 
     @check_CB_index
     def filter_by_UMI(self, groupby="Barcode", min_counts=0):
+        """Filter CBSeries by UMI
+
+        Parameters
+        ----------
+        groupby : list or str
+            list with combination of categories or a string with a single
+            category (correspond to index)
+        min_counts : int
+            only entires with >= min_counts are kept
+
+        Returns
+        -------
+        CBSeries
+            Filtered object
+        """
         labels = ["CBC", "Barcode"]
         return filter_series(
             self, groupby=groupby, labels=labels, min_counts=min_counts
@@ -127,12 +242,41 @@ class CBSeries(pd.Series):
         *args,
         **kwargs,
     ):
+        """Plot histogram of counts
+
+        Parameters
+        ----------
+        groupby : list or str
+            List with combination of categories or a string with a sngle category to group counts (correspond to the index)
+        title : str
+            Plot title
+        *args : tuple
+            Arguments passed to matplotlib hist function
+        **kwargs : dict
+            Arguments passed to matplotlib hist function
+
+        """
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
     @check_CB_index
     def assign_barcodes(self, dispr_filter=None):
-        """Assigns barcode"""
+        """Assign barcodes to cell
 
+        Loops through each cell and assigns the barcode(s) to each one
+
+        Parameters
+        ----------
+        dispr_filter : float
+            If None all barcodes are assigned to the cell. Otherwise all
+            barcodes < dispr_filter * max_count are rejected. max_count
+            correspond to the counts observed for the most abundant barcode
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with barcodes assigned per cell
+
+        """
         df = pd.DataFrame()
 
         for i in self.index.get_level_values("CBC").unique():
@@ -155,11 +299,13 @@ class CBSeries(pd.Series):
 
     @check_CB_index
     def plot_barcode_no(self):
+        """Plot number of barcodes per cell"""
         x = self.groupby("CBC").size()
         plot_barcodes_no(x)
 
     @check_CB_index
     def summary(self):
+        """Print summary of observed barcodes"""
         total_umi = self.sum()
         total_CBC = len(self.index.get_level_values("CBC").unique())
         total_barcode = len(self.index.get_level_values("Barcode").unique())
@@ -175,11 +321,27 @@ class CBSeries(pd.Series):
         )
 
     def save_barcodes(self, *args, **kwargs):
+        """Save CBSeries to a CSV file
+
+        Saves to a CSV files which can be read with the load_barcodes function
+        """
         self.to_csv(*args, **kwargs)
 
 
 def check_CBU_index(f):
-    """Decorator to check the index before running some CBU-specific methods"""
+    """Decorator - checks if CBUSeries index is valid
+
+    Parameters
+    ----------
+    f : function
+        function running on CBUSeries that requires valid index
+
+    Raises
+    ------
+    Exception
+        CBUSeries index is invalid
+
+    """
 
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -191,6 +353,23 @@ def check_CBU_index(f):
 
 
 class CBUSeries(pd.Series):
+    """CBC-Barcode-UMI Series with counts
+
+    Class inheriting from pd.Series, indexed by CBC, Barcode and UMI, typically
+    containing read counts.
+
+    Parameters
+    ----------
+    pd.Series : pd.Series
+        pandas Series object
+
+    Raises
+    ------
+    Exception
+        Index invalid
+
+    """
+
     def __init__(self, *args, **kwargs):
         super(CBUSeries, self).__init__(*args, **kwargs)
         self.summary_data = {}
@@ -210,17 +389,46 @@ class CBUSeries(pd.Series):
         *args,
         **kwargs,
     ):
+        """Plot histogram of counts
+
+        Parameters
+        ----------
+        groupby : list or str
+            List with combination of categories or a string with a sngle category to group counts (correspond to the index)
+        title : str
+            Plot title
+        *args : tuple
+            Arguments passed to matplotlib hist function
+        **kwargs : dict
+            Arguments passed to matplotlib hist function
+
+        """
         plot_groupby_hist(self, groupby=groupby, *args, **kwargs)
 
     @check_CBU_index
     def plot_barcode_no(self):
+        """Plot number of barcodes per cell"""
         x = self.count_UMI()
         x = x.groupby("CBC").size()
         plot_barcodes_no(x)
 
     @check_CBU_index
     def filter_by_reads(self, groupby="Barcode", min_counts=0):
-        """Filters by minimum expected number of reads. With the groupby column, level combinations are pertmitted"""
+        """Filter CBUSeries by reads
+
+        Parameters
+        ----------
+        groupby : list or str
+            list with combination of categories or a string with a single
+            category (correspond to index)
+        min_counts : int
+            only entires with >= min_counts are kept
+
+        Returns
+        -------
+        CBUSeries
+            Filtered object
+        """
         labels = ["CBC", "Barcode", "UMI"]
 
         return filter_series(
@@ -229,6 +437,26 @@ class CBUSeries(pd.Series):
 
     @check_CBU_index
     def filter_by_hamming(self, which="Barcode", min_distance=2):
+        """Filter based on hamming distance
+
+        Filters CBUSeries based on hamming distance for sequenced in the
+        specified index level (which argument). For pairs of sequences with
+        hamming distance below the threshold always the sequence with higher
+        read count is kept, in case of ties both sequences are retained.
+
+        Parameters
+        ----------
+        which : str
+            Level of the CBU index to apply the filter on
+        min_distance : int
+            sequences with distance smaller than min_distance are rejected
+
+        Returns
+        --------
+        CBUseries
+            filtered based on hamming distance
+
+        """
 
         counts = self.groupby([which]).sum()
         tokeep, toreject, ties = hamming_filter(
@@ -248,10 +476,15 @@ class CBUSeries(pd.Series):
 
     @check_CBU_index
     def count_UMI(self):
+        """Count UMIs
+
+        Counts UMIs and returns a CBSeries
+        """
         return CBSeries(self.groupby(["CBC", "Barcode"]).size())
 
     @check_CBU_index
     def summary(self):
+        """Print summary of observed barcodes"""
         total_reads = self.sum()
         total_umi = len(self.index)
         total_CBC = len(self.index.get_level_values("CBC").unique())
@@ -270,4 +503,8 @@ class CBUSeries(pd.Series):
         )
 
     def save_barcodes(self, *args, **kwargs):
+        """Save CBUSeries to a CSV file
+
+        Saves to a CSV files which can be read with the load_barcodes function
+        """
         self.to_csv(*args, **kwargs)

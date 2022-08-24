@@ -13,7 +13,28 @@ HERE = Path(__file__).parent
 
 
 def get_barcodes(files, type="larry", valid_CBC=None, save="barcodes.csv"):
-    """Describe."""
+    """Retrieve barcodes from fastq
+
+    Uses one a of the recipes to read barcodes from read1 and read2 files
+    corresponding to a 10x Genomics experiment
+
+    Parameters
+    ----------
+    files : dict
+        Dictionary with paths to fastq files, needs to have 'r1' and 'r2' keys
+    type : str
+        recipe used to recover barcodes
+    valid_CBC : Optional[list, np.ndarray]
+        List or array with valid cell barcodes
+    save : string
+        Path where the barcode counts will be saved
+
+    Returns
+    --------
+    CBUSeries
+        Returns CBUSeries (derivation of pd.Series) with CBC, Barcode, UMI read counts
+
+    """
     if type == "larry":
         counts = process_larry(files, valid_CBC=valid_CBC)
         return counts
@@ -27,6 +48,28 @@ def get_barcodes_report(
     make_html=True,
     include_code=True,
 ):
+    """Retrieve barcodes and generate report
+
+    Retrieves the barcodes using the get_barcodes function and generates the
+    report using the specified template.
+
+    Parameters
+    ----------
+    files : dict
+        Dictionary with paths to fastq files, needs to have 'r1' and 'r2' keys
+    report_template : str
+        Name of the template used for report generation (stored as .ipynb in the
+        templates directory)
+    save_path : PATH or str
+        path where the report and barcodes should be saved
+    prefix : str
+        prefix for the report and barcodes files
+    make_html : bool
+        whether the .ipynb report should be automatically converted to html
+    include_code : bool
+        whether source code should be included in the report
+
+    """
     if save_path is str:
         save_path = Path(save_path)
     ipynb_path = Path(save_path, prefix).with_suffix(".ipynb")

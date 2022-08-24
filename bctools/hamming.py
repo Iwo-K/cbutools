@@ -5,12 +5,31 @@ from IPython.core.debugger import set_trace
 
 
 def map2d(x, y, func, symmetry=False):
-    """Calls function elementwise on iterable 1d objects x and y and returns
+    """Apply function element-wise to 2 arrays and construct a matrix
+
+    Calls function elementwise on iterable 1d objects x and y and returns
     a matrix with the output values.
-    By setting symmetry to True, function assumes symmetry in the output matrix
-    thus only calculates the upper triangle and copying results into the lower
-    triangle (thus cutting the computation time in half). Note: this involves
-    computing the transpose so may consume more memory"""
+
+    Parameters
+    ----------
+    x : Array-like
+        1d array
+    y : Array-like
+        1d array
+    func : function
+        A two-argument function returning a value to be inserted into the matrix
+    symmetry : bool
+        By setting symmetry to True, function assumes symmetry in the output matrix
+        thus only calculates the upper triangle and copying results into the lower
+        triangle (thus cutting the computation time in half). Note: this involves
+        computing the transpose so may consume more memory
+
+    Returns
+    -------
+    np.array
+        2d array with results
+
+    """
     mat = np.zeros((len(x), len(y)))
 
     if not symmetry:
@@ -46,9 +65,10 @@ def hamming_filter(counts, min_distance=3):
         sequences in the index and counts in values
     min_distance : int
         Minimum hamming distance threshold, barcodes with distance < threshold are discarded
+
     Returns
     -------
-    CBUSeries
+    pd.Series or CBUSeries or CBSeries
         Filtered CBUSeries
 
     """
@@ -90,36 +110,3 @@ def hamming_filter(counts, min_distance=3):
     )
 
     return tokeep, toreject, ties
-
-
-# solution from the LARRY github repo
-# Sorts all barcodes and loop through barcodes
-# The first caught barcode goes into the good_gfp_bcs dictionary
-# and then each next barcode is first compared against good_gfp_bcs and
-# if not matching then added as well
-# This is a very performant solution as it does not do all the pairwise comaprisons
-# but it depends on the sorted order, which means
-# that it does not provide the actual true barcode sequence (gets collapsed to alphabeticaly first)
-# may also cause some problems in edge cases with e.g. three barcodes a,b,c with a-b and b-c differing by 2 letters
-# but a-c differing by let's say 3 letters
-# Also does not store distances for inspection
-#
-# N_HAMMING = 2
-# def hamming(bc1,bc2): return np.sum([x1 != x2 for x1,x2 in zip(bc1,bc2)])
-
-# all_gfp_bcs = sorted(set([k[1] for k in gz.index.to_list()]))
-# good_gfp_bcs = []
-# bc_map = {}
-# for i,bc1 in enumerate(all_gfp_bcs):
-#     if i > 0 and i % 500 == 0: print('Mapped '+repr(i)+' out of '+repr(len(all_gfp_bcs))+' barcodes')
-#     mapped = False
-#     for bc2 in good_gfp_bcs:
-#         if hamming(bc1,bc2) <= N_HAMMING:
-#             mapped = True
-#             bc_map[bc1] = bc2
-#             break
-#     if not mapped:
-#         good_gfp_bcs.append(bc1)
-
-# print('\nCollapsed '+repr(len(bc_map))+' barcodes')
-# for bar in good_gfp_bcs: bc_map[bar] = bar

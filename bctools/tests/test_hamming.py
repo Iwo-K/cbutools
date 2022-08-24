@@ -27,6 +27,7 @@ def test_map2d():
 
 
 def test_map2d_sym():
+    """Like test_map2d but with the symmetry option True"""
     x = np.array([1, 2, 3, 4])
 
     out = bc.hamming.map2d(x, x, lambda a, b: a * b, symmetry=True)
@@ -42,5 +43,4 @@ def test_hamming(monkeypatch):
 
     assert (keep == np.array(["AAAAAAA", "CCCCCCC", "CCDDCCC"])).all()
     assert (reject == np.array(["AAAABBB", "BAAAAAB"])).all()
-    print(tie)
     assert tie == dict(CCCCCCC=["CCDDCCC"], CCDDCCC=["CCCCCCC"])

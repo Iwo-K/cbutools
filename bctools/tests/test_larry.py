@@ -15,6 +15,7 @@ def test_load():
 
 
 def test_debug():
+    """Checking if debug=True works and files are available for inspection"""
     file1 = str(HERE / "data/SLX-22398.SITTA1.s_1.r_1_small.fq")
     file2 = str(HERE / "data/SLX-22398.SITTA1.s_1.r_2_small.fq")
     files = {"r1": file1, "r2": file2}
@@ -28,6 +29,7 @@ def test_debug():
 
 
 def test_cutadapt():
+    """Checking if cutadapt extracts barcodes correctly"""
     file1 = str(HERE / "data/mock_larry_cutadapt_r1.fq")
     file2 = str(HERE / "data/mock_larry_cutadapt_r2.fq")
     files = {"r1": file1, "r2": file2}
@@ -50,6 +52,7 @@ def test_cutadapt():
 
 
 def test_count():
+    """Checking if reads are counted correctly"""
     file1 = str(HERE / "data/mock_larry_counting_r1.fq")
     file2 = str(HERE / "data/mock_larry_counting_r2.fq")
     files = {"r1": file1, "r2": file2}
@@ -73,6 +76,7 @@ def test_count():
 
 
 def test_count_CBC():
+    """Cheking if reads are counted correctly when valid_CBC argument is provided"""
     file1 = str(HERE / "data/mock_larry_counting_r1.fq")
     file2 = str(HERE / "data/mock_larry_counting_r2.fq")
     files = {"r1": file1, "r2": file2}
