@@ -1,21 +1,76 @@
-#+TITLE: bctools - recovering expressed barcodes from scRNA-Seq data
+#+TITLE: bctools
 #+AUTHOR: Iwo Kucinski
 
-* Larry recipe
+Bctools is a python package designed to recover barcodes from scRNA-Seq data and assign them to single cells.
 
-First criterium
-Larry barcode is flanked by (in the direction the larry barcode sequencing is read)
-TTGCTAGGAGAGACCATATG...ATGTCTGGATCCGATATCGC
-and has the structure
-NNNNTGNNNNCANNNNACNNNNGANNNNGTNNNNAGNNNN
+* Installation
+Simply download the package from this repo and pip-install it:
 
-* notes
-In paired-end mode, Cutadapt checks whether the input files are properly paired. An error is raised if one of the files contains more reads than the other or if the read names in the two files do not match.
+#+begin_src bash
+git clone https://github.com/Iwo-K/bctools .
+cd bctools
+pip install '.[dev]'
+#+end_src
 
-* Report testing
-run
+If you want to generate .ipynb notebooks and .html reports install the report version following (this will install jupyter and a few other dependencies):
+#+begin_src bash
+pip install '.[report]'
+#+end_src
+
+If you want to extend bctools functionality install the dev version:
+#+begin_src bash
+pip install '.[dev]'
+#+end_src
+* How to use
+Run the ~get_barcodes~ supplying a dictionary containing paths to the fastq files (keys need to be 'r1' for read1 and 'r2' for read2).
+Bctools can be easily adapted to to handle different types of barcodes, see *Recipes* section below.
+
+Optionally, valid cell barcodes (CBC) can be provided, for instance real cells (and not empty droplets) obtained from cellranger analysis.
+
+~get_barcodes~ will return a CBUSeries object which contains read counts per CBC-Barcode-UMI combination.
+CBUSeries can be subsequently processed to obtain the most faithful barcode assignment.
+
+For an example how to filter and assign barcodes to cells have a look at the report_template located in ~bctools/templates/larry1_template.ipynb~
+** CBUSeries
+This object behaves just like pandas Series with a Multiindex but has additional methods:
+- ~plot_barcode_no~ - plots the number of observed barcodes per CBC
+- ~plot_hist~ - plots a histogram with read counts per CBC, Barcode, UMI (or their combination)
+- ~filter_by_reads~ - filters by the minimum number of genes observed per CBC, Barcode, UMI (or their combination)
+- ~filter_by_hamming~ - filters the Barcodes (or CBCs or UMIs) by minimum hamming distance, keeping the more abundant barcodes
+- ~summary~ - calculate and display basic barcode statistics
+- ~save_barcodes~ - saves to a CSV file which can be loaded with ~load_barcodes~
+- ~count_UMI~ - counts number of UMI per CBC-UMI combination and return CBSeries
+** CBSeries
+This object behaves just like pandas Series with a Multiindex but has additional methods:
+- ~plot_barcode_no~ - plots the number of observed barcodes per CBC
+- ~plot_hist~ - plots a histogram with UMI counts per CBC, Barcode, UMI (or their combination)
+- ~filter_by_UMI~ - filters by the minimum number of genes observed per CBC, Barcode (or their combination)
+- ~save_barcodes~ - saves to a CSV file which can be loaded with ~load_barcodes~
+- ~summary~ - calculate and display basic barcode statistics
+- ~assign_barcodes~ - returns a pandas DataFrame with barcodes assigned to each cell
+
+* Recipes
+Bctools can easily be extended to recover barcodes in various formats, as long as barcode information follows the basic structure: cell barcode (CBC), barcode, unique molecular identifier (UMIs).
+Barcodes are recovered with the ~get_barcodes~ function with the specified ~type~.
+So far bctools can recover:
+
+** LARRY barcodes (type='larry') - 10X data
+LARRY barcode have been introduced by [[DOI: 10.1126/science.aaw3381][Weinreb et al. Science 2020 and]] for lineage tracing of haematopoietic stem and progenitor cells.
+Barcode is located in the mRNA downstream of the GFP coding sequence and just before the polyadenylation signal.
+The barcode is flanked on either side with: ~TGCTAGGAGAGACCATATG...ATGTCTGGATCCGATATCGC~ and has the form of:
+~NNNNTGNNNNCANNNNACNNNNGANNNNGTNNNNAGNNNN~.
+
+LARRY barcodes processing is defined in the ~process_larry~ function in the larry.py
+
+*Note*: the recipe is only compatible with 10x scRNA-Seq 3' v3 or 3.1 protocols.
+
+* Reports
+Bctools uses jupyter and papermill to dynamically generate reports (install the [report] or [dev] version).
+Templates are stored in the ~templates~ directory and can be run with ~get_barcodes_report~.
+
+To add another template just add an .ipynb notebook to the ~templates~ directory and specify the template in ~get_barcodes_report~.
+
+For testing this functionality it is useful to specify pytest's temporary directory, which makes inspection of the reports easier.
 #+begin_src bash
 pytest --basetemp=mydir
 #+end_src
-
-to save the reports to a chosen location for inspection
