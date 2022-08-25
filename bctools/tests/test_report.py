@@ -14,7 +14,7 @@ def test_larry1_report(tmp_path):
         files={"r1": file1, "r2": file2},
         report_template="larry1",
         save_path=tmp_path,
-        include_code=False,
+        include_code=True,
     )
 
     assert os.path.isfile(tmp_path / "larry1.ipynb")

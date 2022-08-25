@@ -47,6 +47,9 @@ def get_barcodes_report(
     prefix="larry1",
     make_html=True,
     include_code=True,
+    min_reads=2,
+    min_hamming=2,
+    min_umis=2
 ):
     """Retrieve barcodes and generate report
 
@@ -84,9 +87,9 @@ def get_barcodes_report(
             parameters=dict(
                 read1=files["r1"],
                 read2=files["r2"],
-                min_reads=2,
-                min_hamming=2,
-                min_umis=2,
+                min_reads=min_reads,
+                min_hamming=min_hamming,
+                min_umis=min_umis,
                 csv_path=str(csv_path),
             ),
         )
