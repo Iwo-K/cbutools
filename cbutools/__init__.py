@@ -3,8 +3,8 @@ from scipy.stats.contingency import crosstab
 import numpy as np
 import pandas as pd
 from . import hamming
-from . import cbu
-from .cbu import load_barcodes
+from . import CBUclasses
+from .CBUclasses import load_barcodes
 import papermill as pm
 from pathlib import Path
 from subprocess import run

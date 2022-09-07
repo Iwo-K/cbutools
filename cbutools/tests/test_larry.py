@@ -1,6 +1,6 @@
 #!/usr/bin/env ipython
 from pathlib import Path
-import bctools as bc
+import cbutools as cbu
 import pandas as pd
 import os.path
 
@@ -11,7 +11,7 @@ def test_load():
     file1 = str(HERE / "data/SLX-22398.SITTA1.s_1.r_1_small.fq")
     file2 = str(HERE / "data/SLX-22398.SITTA1.s_1.r_2_small.fq")
     files = {"r1": file1, "r2": file2}
-    bcu = bc.get_barcodes(files)
+    bcu = cbu.get_barcodes(files)
 
 
 def test_debug():
@@ -19,9 +19,9 @@ def test_debug():
     file1 = str(HERE / "data/SLX-22398.SITTA1.s_1.r_1_small.fq")
     file2 = str(HERE / "data/SLX-22398.SITTA1.s_1.r_2_small.fq")
     files = {"r1": file1, "r2": file2}
-    bcu, tempDIR = bc.larry.process_larry(files, debug=True)
+    bcu, tempDIR = cbu.larry.process_larry(files, debug=True)
 
-    assert isinstance(bcu, bc.cbu.CBUSeries)
+    assert isinstance(bcu, cbu.CBUclasses.CBUSeries)
     assert os.path.isfile(tempDIR.name + "/cbcumi1.fq")
     assert os.path.isfile(tempDIR.name + "/bar1.fq")
     assert os.path.isfile(tempDIR.name + "/cbcumi2.fq")
@@ -33,7 +33,7 @@ def test_cutadapt():
     file1 = str(HERE / "data/mock_larry_cutadapt_r1.fq")
     file2 = str(HERE / "data/mock_larry_cutadapt_r2.fq")
     files = {"r1": file1, "r2": file2}
-    cbu = bc.get_barcodes(files).sort_index()
+    bcu = cbu.get_barcodes(files).sort_index()
 
     # fmt: off
     ind = pd.MultiIndex.from_tuples([
@@ -48,7 +48,7 @@ def test_cutadapt():
     ref = pd.Series([1, 1, 1, 1, 1, 1], index=ind)
     ref = ref.sort_index()
 
-    assert cbu.equals(ref)
+    assert bcu.equals(ref)
 
 
 def test_count():
@@ -56,7 +56,7 @@ def test_count():
     file1 = str(HERE / "data/mock_larry_counting_r1.fq")
     file2 = str(HERE / "data/mock_larry_counting_r2.fq")
     files = {"r1": file1, "r2": file2}
-    cbu = bc.get_barcodes(files).sort_index()
+    bcu = cbu.get_barcodes(files).sort_index()
 
     # fmt: off
     ind = pd.MultiIndex.from_tuples([
@@ -72,7 +72,7 @@ def test_count():
     ref = pd.Series([2, 1, 1, 4, 5, 3], index=ind)
     ref = ref.sort_index()
 
-    assert cbu.equals(ref)
+    assert bcu.equals(ref)
 
 
 def test_count_CBC():
@@ -80,7 +80,7 @@ def test_count_CBC():
     file1 = str(HERE / "data/mock_larry_counting_r1.fq")
     file2 = str(HERE / "data/mock_larry_counting_r2.fq")
     files = {"r1": file1, "r2": file2}
-    cbu = bc.get_barcodes(
+    bcu = cbu.get_barcodes(
         files, valid_CBC=["TTGGAGAAGTATTCCG", "AAAAAGAAGTATTCCG"]
     ).sort_index()
 
@@ -95,4 +95,4 @@ def test_count_CBC():
     ref = pd.Series([4, 5, 3], index=ind)
     ref = ref.sort_index()
 
-    assert cbu.equals(ref)
+    assert bcu.equals(ref)

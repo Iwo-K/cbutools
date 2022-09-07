@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "bctools"
+name = "cbutools"
 authors = [{name = "Iwo Kucinski", email = "iwo.kucinski@gmail.com"}]
 description = "Tools for recovery of expressed barcodes from 10x scRNA-Seq data"
 license = {file = "LICENSE"}
@@ -21,7 +21,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "bctools[report]",
+    "cbutools[report]",
     "pytest",
     "black"
 ]
@@ -33,4 +33,4 @@ report = [
 
 [tool.pytest.ini_options]
 python_files = "test_*.py"
-testpaths = "bctools/tests/"
+testpaths = "cbutools/tests/"

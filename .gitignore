@@ -5,4 +5,4 @@
 __pycache__
 *.DS_Store
 
-!bctools/templates/larry1_template.ipynb
+!cbutools/templates/larry1_template.ipynb

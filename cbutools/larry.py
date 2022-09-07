@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from subprocess import run
 import dnaio
-from .cbu import CBUSeries
+from .CBUclasses import CBUSeries
 from tempfile import TemporaryDirectory
 
 
